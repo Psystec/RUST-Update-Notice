@@ -517,9 +517,13 @@ namespace Oxide.Plugins
 
         private void RemoveGuiForAll()
         {
-            BasePlayer.activePlayerList.ForEach(RemoveGui);
-            GuiTracker = 0;
-            y = 0.98;
+	    foreach (var player in BasePlayer.activePlayerList)
+            {
+                RemoveGui(player);
+		GuiTracker = 0;
+            	y = 0.98;
+            }
+            //BasePlayer.activePlayerList.ForEach(RemoveGui);
         }
 
         private void RemoveGui(BasePlayer player)
