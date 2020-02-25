@@ -12,7 +12,7 @@ namespace Oxide.Plugins
 
      // Added error codes to show if it is steam or the API giving an error.
 
-    [Info("Update Notice", "Psystec", "1.1.1", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "1.1.2", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
     public class UpdateNotice : RustPlugin
     {
