@@ -4,12 +4,13 @@ For any information or immediate help please find me on Discord at: .gg/eZcFanf
 API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
 
  ## Permissions
-- `updatenotice.admin` -- For admin only notifications.
+ To use the `Only Notify Admin` option add the following premission to a group or user: `updatenotice.admin`
 
-Example: `oxide.grant user Psystec updatenotice.admin`
+- Example1: `oxide.grant user Psystec updatenotice.admin`
+- Example2: `oxide.grant group admin updatenotice.admin`
 
  ## Features
- Update Notice can be used to notify you when the following updates is released:
+Update Notice can be used to notify you when the following updates is released:
 *  Server
 *  DevBlog
 *  Client
@@ -55,7 +56,7 @@ You can also be notified via:
 ```
  
  ## Discord Notifications
- Official Discord [Documentation](https://support.discordapp.com/hc/en-us/articles/228383668).
+Official Discord [Documentation](https://support.discordapp.com/hc/en-us/articles/228383668).
 
 1. Change the setting `Enable Discord Notifications` to `true`
 2. Replace the Webhook URL setting `Discord Webhook URL` with your custom URL from discord.
