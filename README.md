@@ -1,7 +1,7 @@
 ## Announcement 
 API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
 
-For any information or immediate help please find me on Discord: 
+For any information or immediate help please find me on Discord at: .gg/eZcFanf
 
 ## About
 Notifies players when a client and server update has been released with a GUI notification.
