@@ -1,19 +1,16 @@
-﻿using Newtonsoft.Json;
-using Oxide.Game.Rust.Cui;
+﻿using Facepunch;
+using Newtonsoft.Json;
+using Oxide.Core.Plugins;
+using System;
 using System.Collections.Generic;
+using System.Security.Policy;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    /* API hosting provided by Cyrus the Virus @ saltfactoryhosting.com
-     * Salt Factory Hosting Discord: discord.gg/nedgasy
-     * DO NOT EDIT THE CODE BELOW. Use the config file ..\oxide\config\UpdateNotice.json
-     */
-
-     // Added error codes to show if it is steam or the API giving an error.
-
-    [Info("Update Notice", "Psystec", "1.1.2", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "1.2.0", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
+
     public class UpdateNotice : RustPlugin
     {
         #region Fields
@@ -21,19 +18,26 @@ namespace Oxide.Plugins
         private const string AdminPermission = "updatenotice.admin";
         private const string ApiUrl = "https://saltfactoryhosting.com/api/update/rust";
         private Configuration _configuration;
-        private int _devBlogId = 0, _port = 0, _serverBuildId = 0, _clientBuildId = 0, _stagingBuildId = 0, _oxideBuildId = 0, _version = 0;
+        private int _devBlogId = 0, _port = 0, _serverBuildId = 0, _clientBuildId = 0, _stagingBuildId = 0, _oxideBuildId = 0;
+        Timer checkTimer;
 
         #endregion Fields
 
         #region Classes
 
+        private class Commands
+        {
+            public string Command { get; set; }
+            public string Desciption { get; set; }
+        }
+
         private class UpdateInfo
         {
-            public int api { get; set; }
             public int client { get; set; }
             public int oxide { get; set; }
             public int server { get; set; }
             public int staging { get; set; }
+            public int api { get; set; }
         }
 
         private class DevBlog
@@ -63,7 +67,8 @@ namespace Oxide.Plugins
             public int appid { get; set; }
         }
 
-        private class DiscordMessage
+        #region Discord Message
+        private class DiscordMessageEmbeds
         {
             /// <summary>
             /// if used, it overrides the default username of the webhook
@@ -77,6 +82,10 @@ namespace Oxide.Plugins
             /// simple message, the message contains (up to 2000 characters)
             /// </summary>
             public string content { get; set; }
+            /// <summary>
+            /// array of embed objects. That means, you can use more than one in the same body
+            /// </summary>
+            public Embed[] embeds { get; set; }
         }
         private class Embed
         {
@@ -172,6 +181,7 @@ namespace Oxide.Plugins
             /// </summary>
             public bool inline { get; set; }
         }
+        #endregion Discord Message
 
         #endregion Classes
 
@@ -179,7 +189,7 @@ namespace Oxide.Plugins
 
         private class Configuration
         {
-            [JsonProperty("Only Notify Admins")]
+            [JsonProperty("Only Notify Admin")]
             public bool OnlyNotifyAdmins { get; set; } = false;
 
             [JsonProperty("Enable Discord Notifications")]
@@ -191,8 +201,14 @@ namespace Oxide.Plugins
             [JsonProperty("Enable Gui Notifications")]
             public bool EnableGuiNotifications { get; set; } = true;
 
-            [JsonProperty("GUI Removal Delay (in Seconds)")]
-            public int GuiRemovalDelay { get; set; } = 300;
+            [JsonProperty("Enable Chat Notifications")]
+            public bool EnableChatNotifications { get; set; } = true;
+
+            [JsonProperty("GUI Notifications Tint Color")]
+            public string GUINotificationsTintColor { get; set; } = "Purple";
+
+            [JsonProperty("GUI Notifications Text Color")]
+            public string GUINotificationsTextColor { get; set; } = "Yellow";
 
             [JsonProperty("Enable Server Version Notifications")]
             public bool EnableServer { get; set; } = true;
@@ -210,7 +226,7 @@ namespace Oxide.Plugins
             public bool EnableOxide { get; set; } = false;
 
             [JsonProperty("Checking Interval (in Seconds)")]
-            public int CheckingInterval { get; set; } = 180;
+            public int CheckingInterval { get; set; } = 300;
         }
 
         protected override void LoadDefaultConfig()
@@ -224,7 +240,7 @@ namespace Oxide.Plugins
             base.LoadConfig();
             _configuration = Config.ReadObject<Configuration>();
 
-            if (_configuration.CheckingInterval < 180)
+            if (_configuration.CheckingInterval < 1)
             {
                 PrintWarning("Checking interval must be 180 seconds or greater! Setting this lower may get your server banned. Auto adjusted to 300.");
                 _configuration.CheckingInterval = 300;
@@ -246,8 +262,9 @@ namespace Oxide.Plugins
                 ["ClientUpdated"] = "Client Update Released!",
                 ["StagingUpdated"] = "Staging Update Released!",
                 ["OxideUpdated"] = "Oxide Update Released!",
-                ["UpdateNoticeApiUpdated"] = "Update Notice API Updated",
-                ["FailedToCheckUpdates"] = "Failed to check for RUST updates, if this keeps happening please contact the developer."
+                ["FailedToCheckUpdates"] = "Failed to check for RUST updates, if this keeps happening please contact the developer.",
+                ["PluginNotFoundGuiAnnouncements"] = "GUIAnnouncements plugin was not found. Disabled by defaut.",
+                ["NoPermission"] = "You do not have permission to use this command."
             }, this);
         }
 
@@ -265,74 +282,126 @@ namespace Oxide.Plugins
         private void Loaded()
         {
             CompareBuilds();
-            timer.Every(_configuration.CheckingInterval, CompareBuilds);
+            checkTimer = timer.Every(_configuration.CheckingInterval, CompareBuilds);
+
+            if (GUIAnnouncements == null)
+            {
+                PrintWarning(Lang("PluginNotFoundGuiAnnouncements"));
+                _configuration.EnableGuiNotifications = false;
+            }
+
+        }
+
+        private void OnServerInitialized()
+        {
+            
+        }
+
+        private void OnPluginUnloaded(Plugin name)
+        {
+            if (name == this)
+            {
+                checkTimer.Destroy();
+            }
         }
 
         #endregion Hooks
 
         #region Testing
 
-        [ChatCommand("updatenotice")]
-        private void UpdateNoticeTest(BasePlayer player, string command, string[] args)
+        [ConsoleCommand("updatenotice")]
+        private void AdvertCommands(ConsoleSystem.Arg arg)
         {
-            if (args.Length == 0)
+            var player = arg.Player();
+            if (player == null) return;
+            if (!HasPermission(player, AdminPermission)) return;
+            var args = arg?.Args ?? null;
+
+            if (args == null)
             {
+                SendReply(arg, ("COMMAND").PadRight(50) + "DESCRIPTION");
+                SendReply(arg, ("updatenotice gui").PadRight(50) + "Tests GUI notification");
+                SendReply(arg, ("updatenotice discord").PadRight(50) + "Tests Discord notification");
+                SendReply(arg, ("updatenotice current").PadRight(50) + "Display's current update versions");
+                SendReply(arg, ("updatenotice server").PadRight(50) + "Simulate Server Update Release");
+                SendReply(arg, ("updatenotice devblog").PadRight(50) + "Simulate DevBlog Update Release");
+                SendReply(arg, ("updatenotice client").PadRight(50) + "Simulate Client Update Release");
+                SendReply(arg, ("updatenotice staging").PadRight(50) + "Simulate Staging Update Release");
+                SendReply(arg, ("updatenotice oxide").PadRight(50) + "Simulate Oxide Update Release");
+                SendReply(arg, ("updatenotice all").PadRight(50) + "Simulate All Updates Released");
+                SendReply(arg, ("updatenotice check").PadRight(50) + "Forces a version check");
                 return;
             }
 
-            if (args[0] == "current")
+            if (args[0] == "gui")
             {
-                //SendReply(player, "Server: " + _serverBuildId.ToString());
-                //SendReply(player, "Client: " + _clientBuildId.ToString());
-                //SendReply(player, "Staging: " + _stagingBuildId.ToString());
-                //SendReply(player, "Oxide: " + _oxideBuildId.ToString());
-                //SendReply(player, "Version: " + _version.ToString());
+                SendReply(arg, "Testing GUI Messages: Test message from Update Notice by Psystec");
+                Puts("Testing GUI Messages: Test message from Update Notice by Psystec");
+                SendtoGui("Test message from Update Notice by Psystec");
 
-                SendReply(player, "Server: " + _serverBuildId.ToString() + "\n" +
-                    "DevBlog: " + _devBlogId.ToString() + "\n" +
-                    "Client: " + _clientBuildId.ToString() + "\n" +
-                    "Staging: " + _stagingBuildId.ToString() + "\n" +
-                    "Oxide: " + _oxideBuildId.ToString() + "\n" +
-                    "API: " + _version.ToString());
             }
 
             if (args[0] == "discord")
             {
-                SendToDiscord("Test Message from Rust server.");
+                SendReply(arg, "Testing Discord Messages: Test message from Update Notice by Psystec");
+                Puts("Testing Discord Messages: Test message from Update Notice by Psystec");
+                SendToDiscord("Test message from Update Notice by Psystec");
+            }
+
+            if (args[0] == "current")
+            {
+                SendReply(arg, "Update Notice by Psystec\nServer: " + _serverBuildId.ToString() + "\n" +
+                    "DevBlog: " + _devBlogId.ToString() + "\n" +
+                    "Client: " + _clientBuildId.ToString() + "\n" +
+                    "Staging: " + _stagingBuildId.ToString() + "\n" +
+                    "Oxide: " + _oxideBuildId.ToString());
+
+                Puts("Update Notice by Psystec\nServer: " + _serverBuildId.ToString() + "\n" +
+                    "DevBlog: " + _devBlogId.ToString() + "\n" +
+                    "Client: " + _clientBuildId.ToString() + "\n" +
+                    "Staging: " + _stagingBuildId.ToString() + "\n" +
+                    "Oxide: " + _oxideBuildId.ToString());
             }
 
             if (args[0] == "server")
             {
+                SendReply(arg, "Testing Server Update");
+                Puts("Testing Server Update");
                 _serverBuildId = 1;
             }
 
             if (args[0] == "devblog")
             {
+                SendReply(arg, "Testing Devblog Update");
+                Puts("Testing Devblog Update");
                 _devBlogId = 1;
             }
 
             if (args[0] == "client")
             {
+                SendReply(arg, "Testing Client Update");
+                Puts("Testing Client Update");
                 _clientBuildId = 1;
             }
 
             if (args[0] == "staging")
             {
+                SendReply(arg, "Testing Stagting Update");
+                Puts("Testing Stagting Update");
                 _stagingBuildId = 1;
             }
 
             if (args[0] == "oxide")
             {
+                SendReply(arg, "Testing Oxide Update");
+                Puts("Testing Oxide Update");
                 _oxideBuildId = 1;
-            }
-
-            if (args[0] == "api")
-            {
-                _version = 999;
             }
 
             if (args[0] == "all")
             {
+                SendReply(arg, "Testing All Updates");
+                Puts("Testing All Updates");
                 _serverBuildId = 1;
                 _devBlogId = 1;
                 _clientBuildId = 1;
@@ -340,9 +409,11 @@ namespace Oxide.Plugins
                 _oxideBuildId = 1;
             }
 
-            if (args[0] == "removegui")
+            if (args[0] == "check")
             {
-                RemoveGuiForAll();
+                SendReply(arg, "Forcing Version Check");
+                Puts("Forcing Version Check");
+                CompareBuilds();
             }
         }
 
@@ -367,13 +438,12 @@ namespace Oxide.Plugins
 
                 var updateInfo = JsonConvert.DeserializeObject<UpdateInfo>(response);
 
-                if (_serverBuildId == 0 || _clientBuildId == 0 || _stagingBuildId == 0 || _oxideBuildId == 0 || _version == 0)
+                if (_serverBuildId == 0 || _clientBuildId == 0 || _stagingBuildId == 0 || _oxideBuildId == 0)
                 {
                     _serverBuildId = updateInfo.server;
                     _clientBuildId = updateInfo.client;
                     _stagingBuildId = updateInfo.staging;
                     _oxideBuildId = updateInfo.oxide;
-                    _version = updateInfo.api;
                 }
                 else
                 {
@@ -381,86 +451,70 @@ namespace Oxide.Plugins
                     bool clientUpdated = _clientBuildId != updateInfo.client;
                     bool stagingUpdated = _stagingBuildId != updateInfo.staging;
                     bool oxideUpdated = _oxideBuildId != updateInfo.oxide;
-                    bool versionUpdated = _version != updateInfo.api;
 
-                    if (!serverUpdated && !clientUpdated && !stagingUpdated && !oxideUpdated && !versionUpdated)
+                    if (!serverUpdated && !clientUpdated && !stagingUpdated && !oxideUpdated)
                     {
                         return;
                     }
 
-                    if (versionUpdated)
-                    {
-                        _version = updateInfo.api;
-                        PrintWarning(Lang("UpdateNoticeApiUpdated"));
-
-                        if (_configuration.EnableServer && _configuration.EnableGuiNotifications)
-                        {
-                            DrawGuiForAll(Lang("UpdateNoticeApiUpdated"));
-                        }
-
-                        if (_configuration.EnableServer && _configuration.EnableDiscordNotify)
-                        {
-                            SendToDiscord(Lang("UpdateNoticeApiUpdated"));
-                        }
-                    }
                     if (serverUpdated)
                     {
                         _serverBuildId = updateInfo.server;
-                        PrintWarning(Lang("ServerUpdated"));
+                        Puts(Lang("ServerUpdated"));
 
-                        if (_configuration.EnableServer && _configuration.EnableGuiNotifications)
+                        if (_configuration.EnableServer)
                         {
-                            DrawGuiForAll(Lang("ServerUpdated"));
-                        }
-
-                        if (_configuration.EnableServer && _configuration.EnableDiscordNotify)
-                        {
-                            SendToDiscord(Lang("ServerUpdated"));
+                            if (_configuration.EnableChatNotifications)
+                                SendToChat(Lang("ServerUpdated"));
+                            if (_configuration.EnableGuiNotifications)
+                                SendtoGui(Lang("ServerUpdated"));
+                            if (_configuration.EnableDiscordNotify)
+                                SendToDiscord(Lang("ServerUpdated"));
                         }
                     }
                     if (clientUpdated)
                     {
                         _clientBuildId = updateInfo.client;
-                        PrintWarning(Lang("ClientUpdated"));
+                        Puts(Lang("ClientUpdated"));
 
-                        if (_configuration.EnableClient && _configuration.EnableGuiNotifications)
+                        if (_configuration.EnableClient)
                         {
-                            DrawGuiForAll(Lang("ClientUpdated"));
-                        }
-
-                        if (_configuration.EnableClient && _configuration.EnableDiscordNotify)
-                        {
-                            SendToDiscord(Lang("ClientUpdated"));
+                            if (_configuration.EnableChatNotifications)
+                                SendToChat(Lang("ClientUpdated"));
+                            if (_configuration.EnableGuiNotifications)
+                                SendtoGui(Lang("ClientUpdated"));
+                            if (_configuration.EnableDiscordNotify)
+                                SendToDiscord(Lang("ClientUpdated"));
                         }
                     }
                     if (stagingUpdated)
                     {
                         _stagingBuildId = updateInfo.staging;
-                        PrintWarning(Lang("StagingUpdated"));
+                        Puts(Lang("StagingUpdated"));
 
-                        if (_configuration.EnableStaging && _configuration.EnableGuiNotifications)
+                        if (_configuration.EnableStaging)
                         {
-                            DrawGuiForAll(Lang("StagingUpdated"));
-                        }
-
-                        if (_configuration.EnableStaging && _configuration.EnableDiscordNotify)
-                        {
-                            SendToDiscord(Lang("StagingUpdated"));
+                            if (_configuration.EnableChatNotifications)
+                                SendToChat(Lang("StagingUpdated"));
+                            if (_configuration.EnableGuiNotifications)
+                                SendtoGui(Lang("StagingUpdated"));
+                            if (_configuration.EnableDiscordNotify)
+                                SendToDiscord(Lang("StagingUpdated"));
                         }
                     }
                     if (oxideUpdated)
                     {
                         _oxideBuildId = updateInfo.oxide;
-                        PrintWarning(Lang("OxideUpdated"));
+                        Puts(Lang("OxideUpdated"));
 
-                        if (_configuration.EnableOxide && _configuration.EnableGuiNotifications)
+                        if (_configuration.EnableOxide)
                         {
-                            DrawGuiForAll(Lang("OxideUpdated"));
-                        }
-
-                        if (_configuration.EnableOxide && _configuration.EnableDiscordNotify)
-                        {
-                            SendToDiscord(Lang("OxideUpdated"));
+                            if (_configuration.EnableChatNotifications)
+                                SendToChat(Lang("OxideUpdated"));
+                            if (_configuration.EnableGuiNotifications)
+                                SendtoGui(Lang("OxideUpdated"));
+                            if (_configuration.EnableDiscordNotify)
+                                SendToDiscord(Lang("OxideUpdated"));
                         }
                     }
                 }
@@ -492,16 +546,16 @@ namespace Oxide.Plugins
                     if (devBlogUpdated)
                     {
                         _devBlogId = DevBlogInfo.appnews.newsitems[0].date;
-                        PrintWarning(Lang("DevBlogUpdated"));
+                        Puts(Lang("DevBlogUpdated"));
 
-                        if (_configuration.EnableDevBlog && _configuration.EnableGuiNotifications)
+                        if (_configuration.EnableDevBlog)
                         {
-                            DrawGuiForAll(Lang("DevBlogUpdated"));
-                        }
-
-                        if (_configuration.EnableDevBlog && _configuration.EnableDiscordNotify)
-                        {
-                            SendToDiscord(Lang("DevBlogUpdated"));
+                            if (_configuration.EnableChatNotifications)
+                                SendToChat(Lang("DevBlogUpdated"));
+                            if (_configuration.EnableGuiNotifications)
+                                SendtoGui(Lang("DevBlogUpdated"));
+                            if (_configuration.EnableDiscordNotify)
+                                SendToDiscord(Lang("DevBlogUpdated"));
                         }
                     }
                 }
@@ -511,124 +565,94 @@ namespace Oxide.Plugins
 
         #endregion Build Comparison
 
-        #region Gui Handling
-
-        private void RemoveGuiAfterDelay(int delay) => timer.Once(delay, RemoveGuiForAll);
-
-        private void RemoveGuiForAll()
-        {
-	    foreach (var player in BasePlayer.activePlayerList)
-            {
-                RemoveGui(player);
-		GuiTracker = 0;
-            	y = 0.98;
-            }
-            //BasePlayer.activePlayerList.ForEach(RemoveGui);
-        }
-
-        private void RemoveGui(BasePlayer player)
-        {
-            for (int i = 0; i <= GuiTracker; i++)
-            {
-                CuiHelper.DestroyUi(player, "UpdateNotice" + i.ToString());
-            }
-        }
-
-        private void DrawGuiForAdmins(string message)
-        {
-            foreach (var player in BasePlayer.activePlayerList)
-            {
-                if (player.IsAdmin && HasPermission(player, AdminPermission))
-                {
-                    AddGui(player, message);
-                }
-            }
-            RemoveGuiAfterDelay(_configuration.GuiRemovalDelay);
-        }
-
-        private void DrawGuiForAll(string message)
-        {
-            foreach (var player in BasePlayer.activePlayerList)
-            {
-                if (_configuration.OnlyNotifyAdmins && !HasPermission(player, AdminPermission))
-                {
-                    continue;
-                }
-
-                AddGui(player, message);
-            }
-            RemoveGuiAfterDelay(_configuration.GuiRemovalDelay);
-        }
-
-        private double y = 0.98;
-        private int GuiTracker = 0;
-        private void AddGui(BasePlayer player, string message)
-        {
-            y = y - 0.025;
-            GuiTracker++;
-            var container = new CuiElementContainer();
-
-            var panel = container.Add(new CuiPanel
-            {
-                Image =
-                {
-                    Color = "0.1 0.1 0.1 0.5"
-                },
-                RectTransform =
-                {
-                    AnchorMin = "0.012 " + y.ToString(), // left down
-			        AnchorMax = "0.25 " + (y + 0.02).ToString() // right up
-		        },
-                CursorEnabled = false
-            }, "Hud", "UpdateNotice" + GuiTracker.ToString());
-            container.Add(new CuiLabel
-            {
-                Text =
-                {
-                    Text = message,
-                    FontSize = 14,
-                    Align = TextAnchor.MiddleCenter,
-                    Color = "0.0 8.0 0.0 1.0"
-                },
-                RectTransform =
-                {
-                    AnchorMin = "0.00 0.00",
-                    AnchorMax = "1.00 1.00"
-                }
-            }, panel);
-            CuiHelper.AddUi(player, container);
-            y = y - 0.005;
-        }
-
-        #endregion Procedures
-
         #region Helpers
 
         private string Lang(string key, string id = null, params object[] args) => string.Format(lang.GetMessage(key, this, id), args);
 
-        private bool HasPermission(BasePlayer player, string perm) => permission.UserHasPermission(player.userID.ToString(), perm);
+        //private bool HasPermission(BasePlayer player, string perm) => Permission.UserHasPermission(player.userID.ToString(), perm);
+        private bool HasPermission(BasePlayer player, string perm)
+        {
+            if(!permission.UserHasPermission(player.userID.ToString(), perm))
+                {
+                PrintWarning("UserID: " + player.UserIDString + " | UserName: " + player.displayName + " | " + Lang("NoPermission"));
+                SendReply(player, Lang("NoPermission", player.UserIDString));
+                return false;
+            }
+            return true;
+        }
+
+        private void SendtoGui(string message)
+        {
+            if (GUIAnnouncements == null)
+            {
+                PrintWarning(Lang("PluginNotFoundGuiAnnouncements"));
+                return;
+            }
+
+            foreach (var player in BasePlayer.activePlayerList)
+            {
+                if (_configuration.OnlyNotifyAdmins)
+                {
+                    if (_configuration.OnlyNotifyAdmins && HasPermission(player, AdminPermission))
+                    {
+                        GUIAnnouncements?.Call("CreateAnnouncement", message, _configuration.GUINotificationsTintColor, _configuration.GUINotificationsTextColor, player);
+                        Puts($"Announcement created for: {player.displayName}: {message}");
+                    }
+                }
+                else
+                {
+                    GUIAnnouncements?.Call("CreateAnnouncement", message, _configuration.GUINotificationsTintColor, _configuration.GUINotificationsTextColor, player);
+                    Puts($"Announcement created for: {player.displayName}: {message}");
+                }
+            }
+        }
+
+        private void SendToChat(string message)
+        {
+            rust.BroadcastChat(null, $"<size=20><color=#ff0000>Update Notice</color></size>\n{message}");
+        }
 
         private void SendToDiscord(string message)
         {
-            DiscordMessage dm = new DiscordMessage();
-            dm.content = message;
-            string payload = JsonConvert.SerializeObject(dm);
+            Dictionary<string, string> headers = new Dictionary<string, string>();
+            headers.Add("Content-Type", "application/json");
 
-            webrequest.Enqueue(_configuration.DiscordWebhookURL, payload, (dcode, dresponse) =>
+            DiscordMessageEmbeds dc = new DiscordMessageEmbeds();
+            dc.content = message;
+            dc.embeds = new[]
             {
-                if (dcode != 200 && dcode != 204)
+                new Embed
                 {
-                    if (dresponse == null)
+                    title = "Update Notice",
+                    description = $"Alert Time: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nVisit [Umod](https://umod.org/plugins/update-notice) for more information or [Discord](https://discord.gg/eZcFanf) for any assistance.",
+                    url = "https://discord.gg/eZcFanf",
+                    color = 16711686,
+                    thumbnail = new Thumbnail { url = "https://assets.umod.org/images/icons/plugin/5b676d0909599.jpg" },
+                    footer = new Footer { icon_url = "https://i.imgur.com/OjM8mr4.png", text = "Created by Psystec" }
+                }
+                
+            };
+
+            string payload = JsonConvert.SerializeObject(dc);
+            webrequest.Enqueue(_configuration.DiscordWebhookURL, payload, (code, response) => 
+            {
+                if (code != 200 && code != 204)
+                {
+                    if (response == null)
                     {
-                        PrintWarning($"Discord didn't respond. Error Code: {dcode}");
+                        PrintWarning($"Discord didn't respond. Error Code: {code}");
+                    }
+                    else
+                    {
+                        Puts($"Discord respond with: {response} Payload: {payload}");
                     }
                 }
-            }, this, Core.Libraries.RequestMethod.POST);
-        }
+            }, this, Core.Libraries.RequestMethod.POST, headers);
+        }        
 
         #endregion Helpers
 
-        #region User API
+        #region Internal API
 
         private int GetServerVersion() => _serverBuildId;  // Returns 0 if version could not be determined
         private int GetDevBlogVersion() => _devBlogId;   // Returns 0 if version could not be determined (date)
@@ -636,6 +660,11 @@ namespace Oxide.Plugins
         private int GetStagingVersion() => _stagingBuildId;  // Returns 0 if version could not be determined
         private int GetOxideVersion() => _oxideBuildId;  // Returns 0 if version could not be determined
 
-        #endregion User API
+        #endregion Internal API
+
+        #region External API
+        [PluginReference]
+        Plugin GUIAnnouncements;
+        #endregion External API
     }
 }
