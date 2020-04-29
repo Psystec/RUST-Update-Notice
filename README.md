@@ -1,13 +1,12 @@
-## Announcement 
-API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
-
-For any information or immediate help please find me on Discord at: .gg/eZcFanf
-
 ## About
 Notifies players when a client and server update has been released with a GUI notification.
+For any information or immediate help please find me on Discord at: .gg/eZcFanf
+API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
 
  ## Permissions
 - `updatenotice.admin` -- For admin only notifications.
+
+Example: `oxide.grant user Psystec updatenotice.admin`
 
  ## Features
  Update Notice can be used to notify you when the following updates is released:
