@@ -1,7 +1,9 @@
 ## About
-Notifies players when a client and server update has been released with a GUI notification.
-For any information or immediate help please find me on Discord at: .gg/eZcFanf
-API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
+Notifies players when a server, devblog, client and oxide update has been released with a GUI notification. 
+
+ For any information or immediate help please find me on Discord at: .gg/eZcFanf 
+
+ API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
 
  ## Permissions
  To use the `Only Notify Admin` option add the following premission to a group or user: `updatenotice.admin`
