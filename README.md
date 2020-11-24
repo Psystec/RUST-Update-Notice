@@ -1,7 +1,7 @@
 ## About
 Notifies players when a server, devblog, client and oxide update has been released with a GUI notification. 
 
- For any information or immediate help please find me on Discord at: .gg/eZcFanf 
+ For any information or immediate help please find me on Discord at: gg/EyRgFdA
 
  API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
 
