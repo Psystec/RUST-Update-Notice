@@ -2,11 +2,7 @@ Notifies players when a server, devblog, client and oxide update has been releas
 
 API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
 
- ## Permissions
- 
- To use the `Only Notify Admin` option, add the following premission to a group or player: `updatenotice.admin`
-
- ## Features
+## Features
  
 Update Notice can be used to notify you when the following updates is released:
 
@@ -22,7 +18,11 @@ You can also be notified via:
 * GUI Announcements
 * Discord
 
- ## Configuration
+## Permissions
+ 
+To use the `Only Notify Admin` option, add the following premission to a group or player: `updatenotice.admin`
+
+## Configuration
  
 ```json
 {
@@ -42,8 +42,8 @@ You can also be notified via:
 }
 ```
 
- ## Localization
- 
+## Localization
+
  ```json
 {
   "ServerUpdated": "Server Update Released!",
@@ -56,17 +56,17 @@ You can also be notified via:
   "NoPermission": "You do not have permission to use this command."
 }
 ```
- 
- ## Discord Notifications
+
+## Discord Notifications
  
 Official Discord [Documentation](https://support.discordapp.com/hc/en-us/articles/228383668).
 
 1. Change the setting `Enable Discord Notifications` to `true`
-2. Replace the Webhook URL setting `Discord Webhook URL` with your custom URL from discord.
-3. In the console type `updatenotice discord` to send a test message to discord.
- 
- ## API
- 
+2. Replace the Webhook URL setting `Discord Webhook URL` with your custom URL from Discord.
+3. In the console type `updatenotice discord` to send a test message to Discord.
+
+## For Developers
+
 - All "." has been removed from the version results.
 - Returns 0 if version could not be determined.
 
@@ -78,11 +78,8 @@ UpdateNotice.Call<int>("GetStagingVersion");
 UpdateNotice.Call<int>("GetOxideVersion");
 ```
 
-API Usage Example:
-
 ```csharp
-[PluginReference]
-readonly Plugin UpdateNotice;
+[PluginReference] private Plugin UpdateNotice;
 
 private void Init()
 {
@@ -107,8 +104,8 @@ Console Commands:
 - `updatenotice all` -- Simulate all updates released
 - `updatenotice check` -- Test GUI notification
 
- ## Notification Example
- 
+## Examples
+
 - GUI Notification:
 
 ![](https://i.imgur.com/S53hip4.png)
