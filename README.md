@@ -1,31 +1,30 @@
-## About
 Notifies players when a server, devblog, client and oxide update has been released with a GUI notification. 
 
- For any information or immediate help please find me on Discord at: gg/EyRgFdA
-
- API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
+API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
 
  ## Permissions
- To use the `Only Notify Admin` option add the following premission to a group or user: `updatenotice.admin`
-
-- Example1: `oxide.grant user Psystec updatenotice.admin`
-- Example2: `oxide.grant group admin updatenotice.admin`
+ 
+ To use the `Only Notify Admin` option, add the following premission to a group or player: `updatenotice.admin`
 
  ## Features
+ 
 Update Notice can be used to notify you when the following updates is released:
+
 *  Server
 *  DevBlog
 *  Client
 *  Staging
-*  Oxide (Umod)
+*  Oxide
 
 You can also be notified via:
+
 * Ingame Chat
 * GUI Announcements
 * Discord
 
  ## Configuration
-```
+ 
+```json
 {
   "Only Notify Admin": false,
   "Enable Discord Notifications": false,
@@ -44,7 +43,8 @@ You can also be notified via:
 ```
 
  ## Localization
- ```
+ 
+ ```json
 {
   "ServerUpdated": "Server Update Released!",
   "DevBlogUpdated": "DevBlog Update Released!",
@@ -58,6 +58,7 @@ You can also be notified via:
 ```
  
  ## Discord Notifications
+ 
 Official Discord [Documentation](https://support.discordapp.com/hc/en-us/articles/228383668).
 
 1. Change the setting `Enable Discord Notifications` to `true`
@@ -65,17 +66,21 @@ Official Discord [Documentation](https://support.discordapp.com/hc/en-us/article
 3. In the console type `updatenotice discord` to send a test message to discord.
  
  ## API
+ 
 - All "." has been removed from the version results.
 - Returns 0 if version could not be determined.
-```
+
+```csharp
 UpdateNotice.Call<int>("GetServerVersion");
 UpdateNotice.Call<int>("GetDevBlogVersion");
 UpdateNotice.Call<int>("GetClientVersion");
 UpdateNotice.Call<int>("GetStagingVersion");
 UpdateNotice.Call<int>("GetOxideVersion");
 ```
+
 API Usage Example:
-```
+
+```csharp
 [PluginReference]
 readonly Plugin UpdateNotice;
 
@@ -86,13 +91,14 @@ private void Init()
 ```
 
 ## Testing
+
 When testing messages, the message won't appear immediatly. it will wait till the next API request.
 
 Console Commands:
 
-- `updatenotice gui` -- Tests GUI notification
-- `updatenotice discord` -- Tests Discord notification
-- `updatenotice current` -- Display's current update versions
+- `updatenotice gui` -- Test GUI notification
+- `updatenotice discord` -- Test Discord notification
+- `updatenotice current` -- Display current update versions
 - `updatenotice server` -- Simulate Server update release
 - `updatenotice devblog` -- Simulate DevBlog update release
 - `updatenotice client` -- Simulate Client update release
@@ -102,6 +108,7 @@ Console Commands:
 - `updatenotice check` -- Test GUI notification
 
  ## Notification Example
+ 
 - GUI Notification:
 
 ![](https://i.imgur.com/S53hip4.png)
