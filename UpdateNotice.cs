@@ -1,14 +1,12 @@
-﻿using Facepunch;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
-using System.Security.Policy;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "1.2.0", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "1.3.0", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
 
     public class UpdateNotice : RustPlugin
@@ -16,10 +14,10 @@ namespace Oxide.Plugins
         #region Fields
 
         private const string AdminPermission = "updatenotice.admin";
-        private const string ApiUrl = "https://saltfactoryhosting.com/api/update/rust";
+        private const string ApiUrl = "https://rust-updater.chroma-gaming.xyz/api/notifier/";
         private Configuration _configuration;
         private int _devBlogId = 0, _port = 0, _serverBuildId = 0, _clientBuildId = 0, _stagingBuildId = 0, _oxideBuildId = 0;
-        Timer checkTimer;
+        private Timer checkTimer;
 
         #endregion Fields
 
@@ -37,7 +35,6 @@ namespace Oxide.Plugins
             public int oxide { get; set; }
             public int server { get; set; }
             public int staging { get; set; }
-            public int api { get; set; }
         }
 
         private class DevBlog
@@ -240,7 +237,7 @@ namespace Oxide.Plugins
             base.LoadConfig();
             _configuration = Config.ReadObject<Configuration>();
 
-            if (_configuration.CheckingInterval < 1)
+            if (_configuration.CheckingInterval < 180)
             {
                 PrintWarning("Checking interval must be 180 seconds or greater! Setting this lower may get your server banned. Auto adjusted to 300.");
                 _configuration.CheckingInterval = 300;
@@ -281,28 +278,14 @@ namespace Oxide.Plugins
 
         private void Loaded()
         {
-            CompareBuilds();
-            checkTimer = timer.Every(_configuration.CheckingInterval, CompareBuilds);
-
             if (GUIAnnouncements == null)
             {
                 PrintWarning(Lang("PluginNotFoundGuiAnnouncements"));
                 _configuration.EnableGuiNotifications = false;
             }
 
-        }
-
-        private void OnServerInitialized()
-        {
-            
-        }
-
-        private void OnPluginUnloaded(Plugin name)
-        {
-            if (name == this)
-            {
-                checkTimer.Destroy();
-            }
+            CompareBuilds();
+            checkTimer = timer.Every(_configuration.CheckingInterval, CompareBuilds);
         }
 
         #endregion Hooks
@@ -314,7 +297,11 @@ namespace Oxide.Plugins
         {
             var player = arg.Player();
             if (player == null) return;
-            if (!HasPermission(player, AdminPermission)) return;
+            if (!HasPermission(player, AdminPermission))
+            {
+                SendReply(arg, Lang("NoPermission"));
+                return;
+            }
             var args = arg?.Args ?? null;
 
             if (args == null)
@@ -323,12 +310,12 @@ namespace Oxide.Plugins
                 SendReply(arg, ("updatenotice gui").PadRight(50) + "Tests GUI notification");
                 SendReply(arg, ("updatenotice discord").PadRight(50) + "Tests Discord notification");
                 SendReply(arg, ("updatenotice current").PadRight(50) + "Display's current update versions");
-                SendReply(arg, ("updatenotice server").PadRight(50) + "Simulate Server Update Release");
-                SendReply(arg, ("updatenotice devblog").PadRight(50) + "Simulate DevBlog Update Release");
-                SendReply(arg, ("updatenotice client").PadRight(50) + "Simulate Client Update Release");
-                SendReply(arg, ("updatenotice staging").PadRight(50) + "Simulate Staging Update Release");
-                SendReply(arg, ("updatenotice oxide").PadRight(50) + "Simulate Oxide Update Release");
-                SendReply(arg, ("updatenotice all").PadRight(50) + "Simulate All Updates Released");
+                SendReply(arg, ("updatenotice server").PadRight(50) + "Simulate Server update release");
+                SendReply(arg, ("updatenotice devblog").PadRight(50) + "Simulate DevBlog update release");
+                SendReply(arg, ("updatenotice client").PadRight(50) + "Simulate Client update release");
+                SendReply(arg, ("updatenotice staging").PadRight(50) + "Simulate Staging update release");
+                SendReply(arg, ("updatenotice oxide").PadRight(50) + "Simulate Oxide update release");
+                SendReply(arg, ("updatenotice all").PadRight(50) + "Simulate all updates released");
                 SendReply(arg, ("updatenotice check").PadRight(50) + "Forces a version check");
                 return;
             }
@@ -423,7 +410,7 @@ namespace Oxide.Plugins
 
         private void CompareBuilds()
         {
-            webrequest.Enqueue(ApiUrl + "/" + _port.ToString(), null, (code, response) =>
+            webrequest.Enqueue(ApiUrl, null, (code, response) =>
             {
                 if (code != 200)
                 {
@@ -524,10 +511,7 @@ namespace Oxide.Plugins
             {
                 if (code != 200)
                 {
-                    if (code == 0)
-                    {
-                        return;
-                    }
+                    if (code == 0) return;
 
                     PrintWarning("Steam: " + Lang("FailedToCheckUpdates") + "\nError Code: " + code + " | Message: " + response);
                     return;
@@ -575,7 +559,6 @@ namespace Oxide.Plugins
             if(!permission.UserHasPermission(player.userID.ToString(), perm))
                 {
                 PrintWarning("UserID: " + player.UserIDString + " | UserName: " + player.displayName + " | " + Lang("NoPermission"));
-                SendReply(player, Lang("NoPermission", player.UserIDString));
                 return false;
             }
             return true;
