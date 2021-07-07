@@ -1,5 +1,7 @@
 Notifies players when a server, devblog, client and oxide update has been released with a GUI notification. 
-Update Notice is down. A new API is being developed. Will be back online soon.
+
+Server Sponsored by aldiwildan77. Please visit his discord and stay thank you if you find this plugin usefull: https://discord.chroma-gaming.xyz/
+
 ## Features
  
 Update Notice can be used to notify you when the following updates is released:
