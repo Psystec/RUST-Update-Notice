@@ -1,7 +1,5 @@
 Notifies players when a server, devblog, client and oxide update has been released with a GUI notification. 
 
-API hosting provided by Cyrus the Virus @ saltfactoryhosting.com.
-
 ## Features
  
 Update Notice can be used to notify you when the following updates is released:
