@@ -1,5 +1,5 @@
 Notifies players when a server, devblog, client and oxide update has been released with a GUI notification. 
-
+Update Notice is down. A new API is being developed. Will be back online soon.
 ## Features
  
 Update Notice can be used to notify you when the following updates is released:
