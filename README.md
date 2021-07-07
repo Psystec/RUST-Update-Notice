@@ -1,6 +1,6 @@
 Notifies players when a server, devblog, client and oxide update has been released with a GUI notification. 
 
-Server Sponsored by aldiwildan77. Please visit his discord and stay thank you if you find this plugin usefull: https://discord.chroma-gaming.xyz/
+Server Sponsored by aldiwildan77. Please visit his discord and stay thank you if you find this plugin usefull: https://discord.chroma-gaming.xyz
 
 ## Features
  
