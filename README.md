@@ -1,6 +1,8 @@
-Notifies players when a server, devblog, client and oxide update has been released with a GUI notification. 
+Notifies players when a server, devblog, client and oxide update has been released with a GUI notification.
 
-Server sponsored by aldiwildan77.
+Psystec'Discord: https://discord.psystec.co.za
+
+Server spons
 Please visit his discord and stay thank you if you find this plugin usefull: https://discord.chroma-gaming.xyz
 
 ## Features
