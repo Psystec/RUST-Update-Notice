@@ -2,7 +2,7 @@ Notifies players when a server, devblog, client and oxide update has been releas
 
 Psystec's Discord: https://discord.psystec.co.za
 
-Server spons
+Server sponsored by aldiwildan77. 
 Please visit his discord and stay thank you if you find this plugin usefull: https://discord.chroma-gaming.xyz
 
 ## Features
