@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "1.3.0", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "1.3.1", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
 
     public class UpdateNotice : RustPlugin
@@ -354,46 +354,46 @@ namespace Oxide.Plugins
             {
                 SendReply(arg, "Testing Server Update");
                 Puts("Testing Server Update");
-                _serverBuildId = 1;
+                _serverBuildId = 0;
             }
 
             if (args[0] == "devblog")
             {
                 SendReply(arg, "Testing Devblog Update");
                 Puts("Testing Devblog Update");
-                _devBlogId = 1;
+                _devBlogId = 0;
             }
 
             if (args[0] == "client")
             {
                 SendReply(arg, "Testing Client Update");
                 Puts("Testing Client Update");
-                _clientBuildId = 1;
+                _clientBuildId = 0;
             }
 
             if (args[0] == "staging")
             {
                 SendReply(arg, "Testing Stagting Update");
                 Puts("Testing Stagting Update");
-                _stagingBuildId = 1;
+                _stagingBuildId = 0;
             }
 
             if (args[0] == "oxide")
             {
                 SendReply(arg, "Testing Oxide Update");
                 Puts("Testing Oxide Update");
-                _oxideBuildId = 1;
+                _oxideBuildId = 0;
             }
 
             if (args[0] == "all")
             {
                 SendReply(arg, "Testing All Updates");
                 Puts("Testing All Updates");
-                _serverBuildId = 1;
-                _devBlogId = 1;
-                _clientBuildId = 1;
-                _stagingBuildId = 1;
-                _oxideBuildId = 1;
+                _serverBuildId = 0;
+                _devBlogId = 0;
+                _clientBuildId = 0;
+                _stagingBuildId = 0;
+                _oxideBuildId = 0;
             }
 
             if (args[0] == "check")
