@@ -1,10 +1,10 @@
 Notifies players when a server, devblog, client and oxide update has been released with a GUI notification.
 
-Psystec's Discord: https://discord.psystec.co.za
+Psystec's Discord: discord. gg /EyRgFdA
 
 Server sponsored by aldiwildan77. 
 
-Please visit his discord and say thank you if you find this plugin usefull: https://discord.chroma-gaming.xyz
+Please visit his discord and say thank you if you find this plugin usefull: discord. chroma-gaming.xyz
 
 ## Features
  
@@ -62,8 +62,6 @@ To use the `Only Notify Admin` option, add the following premission to a group o
 ```
 
 ## Discord Notifications
- 
-Official Discord [Documentation](https://support.discordapp.com/hc/en-us/articles/228383668).
 
 1. Change the setting `Enable Discord Notifications` to `true`
 2. Replace the Webhook URL setting `Discord Webhook URL` with your custom URL from Discord.
