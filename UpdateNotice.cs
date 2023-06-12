@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "1.3.2", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "1.3.3", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
 
     public class UpdateNotice : RustPlugin
@@ -446,7 +446,7 @@ namespace Oxide.Plugins
 
                     if (serverUpdated)
                     {
-                        _serverBuildId = updateInfo.server;
+                        _serverBuildId = updateInfo.RustServer;
                         Puts(Lang("ServerUpdated"));
 
                         if (_configuration.EnableServer)
@@ -461,7 +461,7 @@ namespace Oxide.Plugins
                     }
                     if (clientUpdated)
                     {
-                        _clientBuildId = updateInfo.client;
+                        _clientBuildId = updateInfo.RustClient;
                         Puts(Lang("ClientUpdated"));
 
                         if (_configuration.EnableClient)
@@ -476,7 +476,7 @@ namespace Oxide.Plugins
                     }
                     if (stagingUpdated)
                     {
-                        _stagingBuildId = updateInfo.staging;
+                        _stagingBuildId = updateInfo.RustClientStaging;
                         Puts(Lang("StagingUpdated"));
 
                         if (_configuration.EnableStaging)
@@ -491,7 +491,7 @@ namespace Oxide.Plugins
                     }
                     if (oxideUpdated)
                     {
-                        _oxideBuildId = updateInfo.oxide;
+                        _oxideBuildId = updateInfo.UMod;
                         Puts(Lang("OxideUpdated"));
 
                         if (_configuration.EnableOxide)
