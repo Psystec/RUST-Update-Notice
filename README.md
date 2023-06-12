@@ -2,9 +2,9 @@ Notifies players when a server, devblog, client and oxide update has been releas
 
 Psystec's Discord: discord. gg /EyRgFdA
 
-Server sponsored by aldiwildan77. 
+Server sponsored by YaMang -w-
 
-Please visit his discord and say thank you if you find this plugin usefull: discord. chroma-gaming.xyz
+Please visit his discord and say thank you if you find this plugin usefull: discord. /9fHkBftMb
 
 ## Features
  
