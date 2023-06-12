@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "1.3.1", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "1.3.2", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
 
     public class UpdateNotice : RustPlugin
@@ -14,7 +14,7 @@ namespace Oxide.Plugins
         #region Fields
 
         private const string AdminPermission = "updatenotice.admin";
-        private const string ApiUrl = "https://rust-updater.chroma-gaming.xyz/api/notifier/";
+        private const string ApiUrl = "http://rust.yamang.xyz:2095/api";
         private Configuration _configuration;
         private int _devBlogId = 0, _port = 0, _serverBuildId = 0, _clientBuildId = 0, _stagingBuildId = 0, _oxideBuildId = 0;
         private Timer checkTimer;
@@ -31,10 +31,10 @@ namespace Oxide.Plugins
 
         private class UpdateInfo
         {
-            public int client { get; set; }
-            public int oxide { get; set; }
-            public int server { get; set; }
-            public int staging { get; set; }
+            public int RustClient { get; set; }
+            public int UMod { get; set; }
+            public int RustServer { get; set; }
+            public int RustClientStaging { get; set; }
         }
 
         private class DevBlog
@@ -427,17 +427,17 @@ namespace Oxide.Plugins
 
                 if (_serverBuildId == 0 || _clientBuildId == 0 || _stagingBuildId == 0 || _oxideBuildId == 0)
                 {
-                    _serverBuildId = updateInfo.server;
-                    _clientBuildId = updateInfo.client;
-                    _stagingBuildId = updateInfo.staging;
-                    _oxideBuildId = updateInfo.oxide;
+                    _serverBuildId = updateInfo.RustServer;
+                    _clientBuildId = updateInfo.RustClient;
+                    _stagingBuildId = updateInfo.RustClientStaging;
+                    _oxideBuildId = updateInfo.UMod;
                 }
                 else
                 {
-                    bool serverUpdated = _serverBuildId != updateInfo.server;
-                    bool clientUpdated = _clientBuildId != updateInfo.client;
-                    bool stagingUpdated = _stagingBuildId != updateInfo.staging;
-                    bool oxideUpdated = _oxideBuildId != updateInfo.oxide;
+                    bool serverUpdated = _serverBuildId != updateInfo.RustServer;
+                    bool clientUpdated = _clientBuildId != updateInfo.RustClient;
+                    bool stagingUpdated = _stagingBuildId != updateInfo.RustClientStaging;
+                    bool oxideUpdated = _oxideBuildId != updateInfo.UMod;
 
                     if (!serverUpdated && !clientUpdated && !stagingUpdated && !oxideUpdated)
                     {
