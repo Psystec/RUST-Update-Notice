@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "1.3.3", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "1.3.4", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
 
     public class UpdateNotice : RustPlugin
@@ -31,10 +31,10 @@ namespace Oxide.Plugins
 
         private class UpdateInfo
         {
-            public int RustClient { get; set; }
-            public int UMod { get; set; }
-            public int RustServer { get; set; }
-            public int RustClientStaging { get; set; }
+            public string RustClient { get; set; }
+            public string UMod { get; set; }
+            public string RustServer { get; set; }
+            public string RustClientStaging { get; set; }
         }
 
         private class DevBlog
@@ -427,17 +427,17 @@ namespace Oxide.Plugins
 
                 if (_serverBuildId == 0 || _clientBuildId == 0 || _stagingBuildId == 0 || _oxideBuildId == 0)
                 {
-                    _serverBuildId = updateInfo.RustServer;
-                    _clientBuildId = updateInfo.RustClient;
-                    _stagingBuildId = updateInfo.RustClientStaging;
-                    _oxideBuildId = updateInfo.UMod;
+                    _serverBuildId = Convert.ToInt32(updateInfo.RustServer);
+                    _clientBuildId = Convert.ToInt32(updateInfo.RustClient);
+                    _stagingBuildId = Convert.ToInt32(updateInfo.RustClientStaging);
+                    _oxideBuildId = Convert.ToInt32(updateInfo.UMod.Replace(".", ""));
                 }
                 else
                 {
-                    bool serverUpdated = _serverBuildId != updateInfo.RustServer;
-                    bool clientUpdated = _clientBuildId != updateInfo.RustClient;
-                    bool stagingUpdated = _stagingBuildId != updateInfo.RustClientStaging;
-                    bool oxideUpdated = _oxideBuildId != updateInfo.UMod;
+                    bool serverUpdated = _serverBuildId != Convert.ToInt32(updateInfo.RustServer);
+                    bool clientUpdated = _clientBuildId != Convert.ToInt32(updateInfo.RustClient);
+                    bool stagingUpdated = _stagingBuildId != Convert.ToInt32(updateInfo.RustClientStaging);
+                    bool oxideUpdated = _oxideBuildId != Convert.ToInt32(updateInfo.UMod.Replace(".", ""));
 
                     if (!serverUpdated && !clientUpdated && !stagingUpdated && !oxideUpdated)
                     {
@@ -446,7 +446,7 @@ namespace Oxide.Plugins
 
                     if (serverUpdated)
                     {
-                        _serverBuildId = updateInfo.RustServer;
+                        _serverBuildId = Convert.ToInt32(updateInfo.RustServer);
                         Puts(Lang("ServerUpdated"));
 
                         if (_configuration.EnableServer)
@@ -461,7 +461,7 @@ namespace Oxide.Plugins
                     }
                     if (clientUpdated)
                     {
-                        _clientBuildId = updateInfo.RustClient;
+                        _clientBuildId = Convert.ToInt32(updateInfo.RustClient);
                         Puts(Lang("ClientUpdated"));
 
                         if (_configuration.EnableClient)
@@ -476,7 +476,7 @@ namespace Oxide.Plugins
                     }
                     if (stagingUpdated)
                     {
-                        _stagingBuildId = updateInfo.RustClientStaging;
+                        _stagingBuildId = Convert.ToInt32(updateInfo.RustClientStaging);
                         Puts(Lang("StagingUpdated"));
 
                         if (_configuration.EnableStaging)
@@ -491,7 +491,7 @@ namespace Oxide.Plugins
                     }
                     if (oxideUpdated)
                     {
-                        _oxideBuildId = updateInfo.UMod;
+                        _oxideBuildId = Convert.ToInt32(updateInfo.UMod.Replace(".", ""));
                         Puts(Lang("OxideUpdated"));
 
                         if (_configuration.EnableOxide)
