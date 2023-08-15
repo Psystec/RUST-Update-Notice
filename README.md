@@ -2,7 +2,7 @@ Notifies players when a server, devblog, client and oxide update has been releas
 
 Psystec's Discord: discord. /EyRgFdA
 
-Server sponsored by **YaMang -w-** [Click here to see if the plugin's server is alive](https://stats.uptimerobot.com/4JoQvhYzPV/794997039)
+Server sponsored by **YaMang -w-**   :   [Click here to see if the plugin's server is alive](https://stats.uptimerobot.com/4JoQvhYzPV/794997039)
 
 Please visit his discord and say thank you if you find this plugin usefull: discord. /9fHkBftMb
 
