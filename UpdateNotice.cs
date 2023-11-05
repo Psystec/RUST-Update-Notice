@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "3.0.0", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "3.0.1", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
     public class UpdateNotice : RustPlugin
     {
@@ -14,7 +14,7 @@ namespace Oxide.Plugins
         #region Fields
 
         private const string AdminPermission = "updatenotice.admin";
-        private const string ApiUrl = "https://rust.yamang.xyz:2095/rustapi";
+        private const string ApiUrl = "http://rust.yamang.xyz:2095/rustapi";
         private Configuration _configuration;
         private UpdateInfo _updateInfo;
         private bool _initLoad = true;
