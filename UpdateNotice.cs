@@ -6,16 +6,15 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "2.0.1", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "3.0.0", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
-
     public class UpdateNotice : RustPlugin
     {
         //DO NOT EDIT. Please ask for permission or notify me should you require changes.
         #region Fields
 
         private const string AdminPermission = "updatenotice.admin";
-        private const string ApiUrl = "http://rust.yamang.xyz:2095/rustapi";
+        private const string ApiUrl = "https://rust.yamang.xyz:2095/rustapi";
         private Configuration _configuration;
         private UpdateInfo _updateInfo;
         private bool _initLoad = true;
@@ -29,7 +28,7 @@ namespace Oxide.Plugins
         {
             public string Carbon { get; set; }
             public string UMod { get; set; }
-            public string RustClient { get; set; } 
+            public string RustClient { get; set; }
             public string RustClientStaging { get; set; }
             public string RustServer { get; set; }
             public string Newsgid { get; set; }
@@ -196,11 +195,14 @@ namespace Oxide.Plugins
             public bool EnableUMod { get; set; } = false;
         }
 
-        protected override void LoadDefaultConfig() => Config.WriteObject(_configuration);
-
-        private void LoadNewConfig() => _configuration = Config.ReadObject<Configuration>();
-
         protected override void SaveConfig() => Config.WriteObject(_configuration);
+        private void LoadNewConfig() => _configuration = Config.ReadObject<Configuration>();
+        protected override void LoadDefaultConfig() => _configuration = new Configuration();
+        protected override void LoadConfig()
+        {
+            base.LoadConfig();
+            _configuration = Config.ReadObject<Configuration>();
+        }
 
         #endregion Configuration
 
@@ -216,9 +218,10 @@ namespace Oxide.Plugins
                 ["StagingUpdated"] = "Staging Update Released!",
                 ["UModUpdated"] = "UMod Update Released!",
                 ["FailedToCheckUpdates"] = "Failed to check for RUST updates, if this keeps happening please contact the developer.",
-                ["PluginNotFoundGuiAnnouncements"] = "GUIAnnouncements plugin was not found. Disabled by defaut.",
+                ["PluginNotFoundGuiAnnouncements"] = "GUIAnnouncements plugin was not found. GUI Announcements disabled.",
                 ["NoPermission"] = "You do not have permission to use this command.",
-                ["DiscordWebhookURLNotConfigured"] = "Discord Webhook URL is not configured."
+                ["DiscordWebhookURLNotConfigured"] = "Discord Webhook URL is not configured.",
+                ["IntervalCheck"] = "Checking interval must be 180 seconds or greater! Setting this lower may get your server banned. Auto adjusted to 300.",
             }, this);
         }
 
@@ -228,10 +231,6 @@ namespace Oxide.Plugins
 
         private void Init()
         {
-            //if (!Config.Exists())
-            //    LoadDefaultConfig();
-
-            _configuration = Config.ReadObject<Configuration>();
             permission.RegisterPermission(AdminPermission, this);
         }
 
@@ -245,7 +244,7 @@ namespace Oxide.Plugins
 
             if (CheckingInterval < 180)
             {
-                PrintWarning("Checking interval must be 180 seconds or greater! Setting this lower may get your server banned. Auto adjusted to 300.");
+                PrintWarning(Lang("IntervalCheck"));
                 CheckingInterval = 300;
             }
 
@@ -490,17 +489,15 @@ namespace Oxide.Plugins
         #region Helpers
 
         private string Lang(string key, string id = null, params object[] args) => string.Format(lang.GetMessage(key, this, id), args);
-
         private bool HasPermission(BasePlayer player, string perm)
         {
-            if(!permission.UserHasPermission(player.userID.ToString(), perm))
+            if (!permission.UserHasPermission(player.userID.ToString(), perm))
             {
                 PrintWarning("UserID: " + player.UserIDString + " | UserName: " + player.displayName + " | " + Lang("NoPermission"));
                 return false;
             }
             return true;
         }
-
         private void SendtoGui(string message)
         {
             if (GUIAnnouncements == null)
@@ -526,12 +523,10 @@ namespace Oxide.Plugins
                 }
             }
         }
-
         private void SendToChat(string message)
         {
             rust.BroadcastChat(null, $"<size=20><color=#ff0000>Update Notice</color></size>\n{message}");
         }
-
         private void SendToDiscord(string message)
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
@@ -550,11 +545,11 @@ namespace Oxide.Plugins
                     thumbnail = new Thumbnail { url = "https://assets.umod.org/images/icons/plugin/5ea987f1379b2.png" },
                     footer = new Footer { icon_url = "https://assets.umod.org/user/7O3gGkDgaP/14G1myUYST6LEi2.png", text = "Created by Psystec" }
                 }
-                
+
             };
 
             string payload = JsonConvert.SerializeObject(dc);
-            webrequest.Enqueue(_configuration.DiscordWebhookURL, payload, (code, response) => 
+            webrequest.Enqueue(_configuration.DiscordWebhookURL, payload, (code, response) =>
             {
                 if (code != 200 && code != 204)
                 {
@@ -568,20 +563,9 @@ namespace Oxide.Plugins
                     }
                 }
             }, this, Core.Libraries.RequestMethod.POST, headers);
-        }        
+        }
 
         #endregion Helpers
-
-        #region Internal API
-
-        private string GetServerVersion() => _updateInfo.RustServer;
-        private string GetDevBlogVersion() => _updateInfo.Newsgid;
-        private string GetClientVersion() => _updateInfo.RustClient;
-        private string GetStagingVersion() => _updateInfo.RustClientStaging;
-        private string GetUModVersion() => _updateInfo.UMod;
-        private string GetDevBlogLink() => _updateInfo.Newsurl;
-
-        #endregion Internal API
 
         #region External API
         [PluginReference]
