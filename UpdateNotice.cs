@@ -227,6 +227,20 @@ namespace Oxide.Plugins
                 ["DiscordWebhookURLNotConfigured"] = "Discord Webhook URL is not configured.",
                 ["IntervalCheck"] = "Checking interval must be 180 seconds or greater! Setting this lower may get your server banned. Auto adjusted to 300.",
             }, this);
+            lang.RegisterMessages(new Dictionary<string, string>
+            {
+                ["ServerUpdated"] = "Mise à jour du Serveur disponible !",
+                ["DevBlogUpdated"] = "Mise à jour du \"DevBlog\" disponible !",
+                ["ClientUpdated"] = "Mise à jour du Client disponible !",
+                ["StagingUpdated"] = "Mise à jour de la branche \"Staging\" disponible !",
+                ["UModUpdated"] = "Mise à jour de UMod disponible !",
+                ["CarbonUpdated"] = "Mise à jour de Carbon disponible !",
+                ["FailedToCheckUpdates"] = "Récupération des mises à jour de RUST impossible, si cela se reproduit veuillez contacter le développeur.",
+                ["PluginNotFoundGuiAnnouncements"] = "Le plugin GUIAnnouncements n'a pas été trouvé. GUI Announcements désactivé.",
+                ["NoPermission"] = "Vous n'avez pas la permission d'utiliser cette commande",
+                ["DiscordWebhookURLNotConfigured"] = "L'URL du Discord Webhook n'est pas configuré.",
+                ["IntervalCheck"] = "L'interval de vérification doit être de 180 secondes ou plus ! Configurer une valeur inférieure pourrait voir votre serveur banni. Ajustement automatique à 300.",
+            }, this, "fr");
         }
 
         #endregion Localization
