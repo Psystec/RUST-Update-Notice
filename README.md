@@ -15,6 +15,7 @@ Update Notice can be used to notify you when the following updates is released:
 *  Client
 *  Staging
 *  UMod
+*  Carbon
 
 You can also be notified via:
 
@@ -41,7 +42,8 @@ To use the `Only Notify Admin` option, add the following premission to a group o
   "Enable DevBlog Notifications": true,
   "Enable Client Version Notifications": true,
   "Enable Staging Version Notifications": false,
-  "Enable UMod Version Notifications": false
+  "Enable UMod Version Notifications": false,
+  "Enable Carbon Version Notifications": false
 }
 ```
 
@@ -54,6 +56,7 @@ To use the `Only Notify Admin` option, add the following premission to a group o
   "ClientUpdated": "Client Update Released!",
   "StagingUpdated": "Staging Update Released!",
   "UModUpdated": "UMod Update Released!",
+  "CarbonUpdated": "Carbon Update Released!",
   "FailedToCheckUpdates": "Failed to check for RUST updates, if this keeps happening please contact the developer.",
   "PluginNotFoundGuiAnnouncements": "GUIAnnouncements plugin was not found. Disabled by defaut.",
   "NoPermission": "You do not have permission to use this command.",
@@ -75,6 +78,7 @@ UpdateNotice.Call<string>("GetDevBlogVersion");
 UpdateNotice.Call<string>("GetClientVersion");
 UpdateNotice.Call<string>("GetStagingVersion");
 UpdateNotice.Call<string>("GetUModVersion");
+UpdateNotice.Call<string>("GetCarbonVersion");
 UpdateNotice.Call<string>("GetDevBlogLink");
 ```
 
@@ -101,6 +105,7 @@ Console Commands:
 - `updatenotice client` -- Simulate Client update release
 - `updatenotice staging` -- Simulate Staging update release
 - `updatenotice umod` -- Simulate Oxide update release
+- `updatenotice carbon` -- Simulate Carbon update release
 - `updatenotice all` -- Simulate all updates released
 - `updatenotice check` -- Forces a version check
 - `updatenotice loadconfig` -- Reads the config file

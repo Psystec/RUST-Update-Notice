@@ -193,6 +193,9 @@ namespace Oxide.Plugins
 
             [JsonProperty("Enable UMod Version Notifications")]
             public bool EnableUMod { get; set; } = false;
+
+            [JsonProperty("Enable Carbon Version Notifications")]
+            public bool EnableCarbon { get; set; } = false;
         }
 
         protected override void SaveConfig() => Config.WriteObject(_configuration);
@@ -217,12 +220,27 @@ namespace Oxide.Plugins
                 ["ClientUpdated"] = "Client Update Released!",
                 ["StagingUpdated"] = "Staging Update Released!",
                 ["UModUpdated"] = "UMod Update Released!",
+                ["CarbonUpdated"] = "Carbon Update Released!",
                 ["FailedToCheckUpdates"] = "Failed to check for RUST updates, if this keeps happening please contact the developer.",
                 ["PluginNotFoundGuiAnnouncements"] = "GUIAnnouncements plugin was not found. GUI Announcements disabled.",
                 ["NoPermission"] = "You do not have permission to use this command.",
                 ["DiscordWebhookURLNotConfigured"] = "Discord Webhook URL is not configured.",
                 ["IntervalCheck"] = "Checking interval must be 180 seconds or greater! Setting this lower may get your server banned. Auto adjusted to 300.",
             }, this);
+            lang.RegisterMessages(new Dictionary<string, string>
+            {
+                ["ServerUpdated"] = "Mise à jour du Serveur disponible !",
+                ["DevBlogUpdated"] = "Mise à jour du \"DevBlog\" disponible !",
+                ["ClientUpdated"] = "Mise à jour du Client disponible !",
+                ["StagingUpdated"] = "Mise à jour de la branche \"Staging\" disponible !",
+                ["UModUpdated"] = "Mise à jour de UMod disponible !",
+                ["CarbonUpdated"] = "Mise à jour de Carbon disponible !",
+                ["FailedToCheckUpdates"] = "Récupération des mises à jour de RUST impossible, si cela se reproduit veuillez contacter le développeur.",
+                ["PluginNotFoundGuiAnnouncements"] = "Le plugin GUIAnnouncements n'a pas été trouvé. GUI Announcements désactivé.",
+                ["NoPermission"] = "Vous n'avez pas la permission d'utiliser cette commande",
+                ["DiscordWebhookURLNotConfigured"] = "L'URL du Discord Webhook n'est pas configuré.",
+                ["IntervalCheck"] = "L'interval de vérification doit être de 180 secondes ou plus ! Configurer une valeur inférieure pourrait voir votre serveur banni. Ajustement automatique à 300.",
+            }, this, "fr");
         }
 
         #endregion Localization
@@ -278,6 +296,7 @@ namespace Oxide.Plugins
                 SendReply(arg, ("updatenotice client").PadRight(30) + "Simulate Client update release");
                 SendReply(arg, ("updatenotice staging").PadRight(30) + "Simulate Staging update release");
                 SendReply(arg, ("updatenotice oxide").PadRight(30) + "Simulate Oxide update release");
+                SendReply(arg, ("updatenotice carbon").PadRight(30) + "Simulate Carbon update release");
                 SendReply(arg, ("updatenotice all").PadRight(30) + "Simulate all updates released");
                 SendReply(arg, ("updatenotice check").PadRight(30) + "Forces a version check");
                 SendReply(arg, ("updatenotice loadconfig").PadRight(30) + "Reads the config file");
@@ -313,17 +332,19 @@ namespace Oxide.Plugins
 
             if (args[0] == "current")
             {
-                SendReply(arg, "Update Notice by Psystec\nServer: " + _updateInfo.RustServer + "\n" +
-                    "DevBlog: " + _updateInfo.Newsgid + "\n" +
-                    "Client: " + _updateInfo.RustClient + "\n" +
-                    "Staging: " + _updateInfo.RustClientStaging + "\n" +
-                    "UMod: " + _updateInfo.UMod);
+                SendReply(arg, $"Update Notice by Psystec\nServer: {_updateInfo.RustServer}\n" +
+                    $"DevBlog: {_updateInfo.Newsgid}\n" +
+                    $"Client: {_updateInfo.RustClient}\n" +
+                    $"Staging: {_updateInfo.RustClientStaging}\n" +
+                    $"UMod: {_updateInfo.UMod}\n" +
+                    $"Carbon: {_updateInfo.Carbon}");
 
-                Puts("Update Notice by Psystec\nServer: " + _updateInfo.RustServer + "\n" +
-                    "DevBlog: " + _updateInfo.Newsgid + "\n" +
-                    "Client: " + _updateInfo.RustClient + "\n" +
-                    "Staging: " + _updateInfo.RustClientStaging + "\n" +
-                    "UMod: " + _updateInfo.UMod);
+                Puts($"Update Notice by Psystec\nServer: {_updateInfo.RustServer}\n" +
+                    $"DevBlog: {_updateInfo.Newsgid}\n" +
+                    $"Client: {_updateInfo.RustClient}\n" +
+                    $"Staging: {_updateInfo.RustClientStaging}\n" +
+                    $"UMod: {_updateInfo.UMod}\n" +
+                    $"Carbon: {_updateInfo.Carbon}");
             }
 
             if (args[0] == "server")
@@ -361,6 +382,13 @@ namespace Oxide.Plugins
                 _updateInfo.UMod = "Simulating UMod Update";
             }
 
+            if (args[0] == "carbon")
+            {
+                SendReply(arg, "Testing Carbon Update");
+                Puts("Testing Carbon Update");
+                _updateInfo.Carbon = "Simulating Carbon Update";
+            }
+
             if (args[0] == "all")
             {
                 SendReply(arg, "Testing All Updates");
@@ -370,6 +398,7 @@ namespace Oxide.Plugins
                 _updateInfo.RustClient = "Simulating Client Update";
                 _updateInfo.RustClientStaging = "Simulating Stagting Update";
                 _updateInfo.UMod = "Simulating UMod Update";
+                _updateInfo.Carbon = "Simulating Carbon Update";
             }
 
             if (args[0] == "forcecheck")
@@ -465,6 +494,20 @@ namespace Oxide.Plugins
                     }
                 }
 
+                if (nVData.Carbon != _updateInfo.Carbon)
+                {
+                    Puts(Lang("CarbonUpdated"));
+                    if (_configuration.EnableCarbon)
+                    {
+                        if (_configuration.EnableChatNotifications)
+                            SendToChat(Lang("CarbonUpdated"));
+                        if (_configuration.EnableGuiNotifications)
+                            SendtoGui(Lang("CarbonUpdated"));
+                        if (_configuration.EnableDiscordNotify)
+                            SendToDiscord(Lang("CarbonUpdated"));
+                    }
+                }
+
                 if (nVData.RustServer != _updateInfo.RustServer)
                 {
                     Puts(Lang("ServerUpdated"));
@@ -540,7 +583,7 @@ namespace Oxide.Plugins
                 {
                     title = "Update Notice",
                     description = $"Alert Time: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nVisit [Umod](https://umod.org/plugins/update-notice) for more information or [Discord](https://discord.gg/EyRgFdA) for any assistance.",
-                    url = "https://discord.gg/eZcFanf",
+                    url = "https://discord.gg/EyRgFdA",
                     color = 16711686,
                     thumbnail = new Thumbnail { url = "https://assets.umod.org/images/icons/plugin/5ea987f1379b2.png" },
                     footer = new Footer { icon_url = "https://assets.umod.org/user/7O3gGkDgaP/14G1myUYST6LEi2.png", text = "Created by Psystec" }
@@ -574,6 +617,7 @@ namespace Oxide.Plugins
         public string GetClientVersion() => _updateInfo.RustClient;
         public string GetStagingVersion() => _updateInfo.RustClientStaging;
         public string GetUModVersion() => _updateInfo.UMod;
+        public string GetCarbonVersion() => _updateInfo.Carbon;
         public string GetDevBlogLink() => _updateInfo.Newsurl;
 
         #endregion Internal API
