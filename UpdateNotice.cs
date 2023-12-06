@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "3.0.2", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "3.0.3", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
     public class UpdateNotice : RustPlugin
     {
