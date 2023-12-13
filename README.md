@@ -33,6 +33,7 @@ To use the `Only Notify Admin` option, add the following premission to a group o
 {
   "Only Notify Admin": false,
   "Enable Discord Notifications": false,
+  "Discord role id to mention (0 = no mention)": 0,
   "Discord Webhook URL": "https://support.discordapp.com/hc/en-us/articles/228383668",
   "Enable GUI Notifications (Needs GUIAnnouncements)": true,
   "Enable Chat Notifications": true,
@@ -58,9 +59,24 @@ To use the `Only Notify Admin` option, add the following premission to a group o
   "UModUpdated": "UMod Update Released!",
   "CarbonUpdated": "Carbon Update Released!",
   "FailedToCheckUpdates": "Failed to check for RUST updates, if this keeps happening please contact the developer.",
-  "PluginNotFoundGuiAnnouncements": "GUIAnnouncements plugin was not found. Disabled by defaut.",
+  "PluginNotFoundGuiAnnouncements": "GUIAnnouncements plugin was not found. GUI Announcements disabled.",
   "NoPermission": "You do not have permission to use this command.",
-  "DiscordWebhookURLNotConfigured": "Discord Webhook URL is not configured."
+  "DiscordWebhookURLNotConfigured": "Discord Webhook URL is not configured.",
+  "IntervalCheck": "Checking interval must be 180 seconds or greater! Setting this lower may get your server banned. Auto adjusted to 300.",
+  "Help.Command": "COMMAND",
+  "Help.Description": "DESCRIPTION",
+  "Help.Gui": "Tests GUI notification (Needs GUIAnnouncements Plugin)",
+  "Help.Discord": "Tests Discord notification",
+  "Help.Current": "Display's all current versions",
+  "Help.Server": "Simulate Server update release",
+  "Help.DevBlog": "Simulate DevBlog update release",
+  "Help.Client": "Simulate Client update release",
+  "Help.Staging": "Simulate Staging update release",
+  "Help.Oxide": "Simulate Oxide update release",
+  "Help.Carbon": "Simulate Carbon update release",
+  "Help.All": "Simulate all updates released (depends on config)",
+  "Help.ForceCheck": "Forces a version check",
+  "Help.LoadConfig": "Reload the config file"
 }
 ```
 
@@ -68,6 +84,7 @@ To use the `Only Notify Admin` option, add the following premission to a group o
 
 1. Change the setting `Enable Discord Notifications` to `true`
 2. Replace the Webhook URL setting `Discord Webhook URL` with your custom URL from Discord.
+2.1 Set a role id to mention in `Discord role id to mention (0 = no mention)` or not
 3. In the console type `updatenotice discord` to send a test message to Discord.
 
 ## For Developers
@@ -107,7 +124,7 @@ Console Commands:
 - `updatenotice umod` -- Simulate Oxide update release
 - `updatenotice carbon` -- Simulate Carbon update release
 - `updatenotice all` -- Simulate all updates released
-- `updatenotice check` -- Forces a version check
+- `updatenotice forcecheck` -- Forces a version check
 - `updatenotice loadconfig` -- Reads the config file
 
 ## Examples
