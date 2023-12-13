@@ -2,11 +2,13 @@
 using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using static ConsoleSystem;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "3.0.3", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "3.1.0", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
     public class UpdateNotice : RustPlugin
     {
@@ -18,7 +20,7 @@ namespace Oxide.Plugins
         private Configuration _configuration;
         private UpdateInfo _updateInfo;
         private bool _initLoad = true;
-        private int CheckingInterval = 180;
+        private int _checkingInterval = 180;
 
         #endregion Fields
 
@@ -164,6 +166,9 @@ namespace Oxide.Plugins
             [JsonProperty("Enable Discord Notifications")]
             public bool EnableDiscordNotify { get; set; } = false;
 
+            [JsonProperty("Discord role id to mention (0 = no mention)")]
+            public ulong DiscordRoleId { get; set; } = 0;
+
             [JsonProperty("Discord Webhook URL")]
             public string DiscordWebhookURL { get; set; } = "https://support.discordapp.com/hc/en-us/articles/228383668";
 
@@ -226,6 +231,20 @@ namespace Oxide.Plugins
                 ["NoPermission"] = "You do not have permission to use this command.",
                 ["DiscordWebhookURLNotConfigured"] = "Discord Webhook URL is not configured.",
                 ["IntervalCheck"] = "Checking interval must be 180 seconds or greater! Setting this lower may get your server banned. Auto adjusted to 300.",
+                ["Help.Command"] = "COMMAND",
+                ["Help.Description"] = "DESCRIPTION",
+                ["Help.Gui"] = "Tests GUI notification (Needs GUIAnnouncements Plugin)",
+                ["Help.Discord"] = "Tests Discord notification",
+                ["Help.Current"] = "Display's all current versions",
+                ["Help.Server"] = "Simulate Server update release",
+                ["Help.DevBlog"] = "Simulate DevBlog update release",
+                ["Help.Client"] = "Simulate Client update release",
+                ["Help.Staging"] = "Simulate Staging update release",
+                ["Help.Oxide"] = "Simulate Oxide update release",
+                ["Help.Carbon"] = "Simulate Carbon update release",
+                ["Help.All"] = "Simulate all updates released (depends on config)",
+                ["Help.ForceCheck"] = "Forces a version check",
+                ["Help.LoadConfig"] = "Reload the config file",
             }, this);
             lang.RegisterMessages(new Dictionary<string, string>
             {
@@ -240,6 +259,20 @@ namespace Oxide.Plugins
                 ["NoPermission"] = "Vous n'avez pas la permission d'utiliser cette commande",
                 ["DiscordWebhookURLNotConfigured"] = "L'URL du Discord Webhook n'est pas configuré.",
                 ["IntervalCheck"] = "L'interval de vérification doit être de 180 secondes ou plus ! Configurer une valeur inférieure pourrait voir votre serveur banni. Ajustement automatique à 300.",
+                ["Help.Command"] = "COMMANDE",
+                ["Help.Description"] = "DESCRIPTION",
+                ["Help.Gui"] = "Simule la notification par GUI (Requiert le plugin GUIAnnouncements)",
+                ["Help.Discord"] = "Simule la notification Discord",
+                ["Help.Current"] = "Affiche toutes les versions actuelles",
+                ["Help.Server"] = "Simule la notification de la mise à jour du Server",
+                ["Help.DevBlog"] = "Simule la notification de la mise à jour \"DevBlog\"",
+                ["Help.Client"] = "Simule la notification de la mise à jour du Client",
+                ["Help.Staging"] = "Simule la notification de la mise à jour de la branche \"Staging\"",
+                ["Help.Oxide"] = "Simule la notification de la mise à jour d'Oxide",
+                ["Help.Carbon"] = "Simule la notification de la mise à jour de Carbon",
+                ["Help.All"] = "Simule toutes les notifications de mise à jour (dépend de la config)",
+                ["Help.ForceCheck"] = "Force l'actualisation des données",
+                ["Help.LoadConfig"] = "Recharge la configuration",
             }, this, "fr");
         }
 
@@ -260,13 +293,13 @@ namespace Oxide.Plugins
                 _configuration.EnableGuiNotifications = false;
             }
 
-            if (CheckingInterval < 180)
+            if (_checkingInterval < 180)
             {
                 PrintWarning(Lang("IntervalCheck"));
-                CheckingInterval = 300;
+                _checkingInterval = 300;
             }
 
-            timer.Every(CheckingInterval, CompareVersions);
+            timer.Every(_checkingInterval, CompareVersions);
         }
 
         #endregion Hooks
@@ -274,146 +307,126 @@ namespace Oxide.Plugins
         #region Testing
 
         [ConsoleCommand("updatenotice")]
-        private void AdvertCommands(ConsoleSystem.Arg arg)
+        private void AdvertCommands(Arg arg)
         {
-            var player = arg.Player();
-            if (player == null) return;
-            if (!HasPermission(player, AdminPermission))
+            if (arg.IsClientside && !HasPermission(arg.Player(), AdminPermission))
             {
                 SendReply(arg, Lang("NoPermission"));
                 return;
             }
-            var args = arg?.Args ?? null;
+            var args = arg?.Args;
 
             if (args == null)
             {
-                SendReply(arg, ("COMMAND").PadRight(30) + "DESCRIPTION");
-                SendReply(arg, ("updatenotice gui").PadRight(30) + "Tests GUI notification (Needs GUIAnnouncements Plugin)");
-                SendReply(arg, ("updatenotice discord").PadRight(30) + "Tests Discord notification");
-                SendReply(arg, ("updatenotice current").PadRight(30) + "Display's current update versions");
-                SendReply(arg, ("updatenotice server").PadRight(30) + "Simulate Server update release");
-                SendReply(arg, ("updatenotice devblog").PadRight(30) + "Simulate DevBlog update release");
-                SendReply(arg, ("updatenotice client").PadRight(30) + "Simulate Client update release");
-                SendReply(arg, ("updatenotice staging").PadRight(30) + "Simulate Staging update release");
-                SendReply(arg, ("updatenotice oxide").PadRight(30) + "Simulate Oxide update release");
-                SendReply(arg, ("updatenotice carbon").PadRight(30) + "Simulate Carbon update release");
-                SendReply(arg, ("updatenotice all").PadRight(30) + "Simulate all updates released");
-                SendReply(arg, ("updatenotice check").PadRight(30) + "Forces a version check");
-                SendReply(arg, ("updatenotice loadconfig").PadRight(30) + "Reads the config file");
+                SendHelp(arg);
                 return;
             }
 
-            if (args[0] == "gui")
+            if (_updateInfo == null)
             {
-                if (GUIAnnouncements == null)
-                {
-                    PrintWarning(Lang("PluginNotFoundGuiAnnouncements"));
-                    return;
-                }
-
-                SendReply(arg, "Testing GUI Messages: Test message from Update Notice by Psystec");
-                Puts("Testing GUI Messages: Test message from Update Notice by Psystec");
-                SendtoGui("Test message from Update Notice by Psystec");
-
-            }
-
-            if (args[0] == "discord")
-            {
-                if (_configuration.DiscordWebhookURL == "https://support.discordapp.com/hc/en-us/articles/228383668" || string.IsNullOrEmpty(_configuration.DiscordWebhookURL))
-                {
-                    PrintWarning(Lang("DiscordWebhookURLNotConfigured"));
-                    return;
-                }
-
-                SendReply(arg, "Testing Discord Messages: Test message from Update Notice by Psystec");
-                Puts("Testing Discord Messages: Test message from Update Notice by Psystec");
-                SendToDiscord("Test message from Update Notice by Psystec");
-            }
-
-            if (args[0] == "current")
-            {
-                SendReply(arg, $"Update Notice by Psystec\nServer: {_updateInfo.RustServer}\n" +
-                    $"DevBlog: {_updateInfo.Newsgid}\n" +
-                    $"Client: {_updateInfo.RustClient}\n" +
-                    $"Staging: {_updateInfo.RustClientStaging}\n" +
-                    $"UMod: {_updateInfo.UMod}\n" +
-                    $"Carbon: {_updateInfo.Carbon}");
-
-                Puts($"Update Notice by Psystec\nServer: {_updateInfo.RustServer}\n" +
-                    $"DevBlog: {_updateInfo.Newsgid}\n" +
-                    $"Client: {_updateInfo.RustClient}\n" +
-                    $"Staging: {_updateInfo.RustClientStaging}\n" +
-                    $"UMod: {_updateInfo.UMod}\n" +
-                    $"Carbon: {_updateInfo.Carbon}");
-            }
-
-            if (args[0] == "server")
-            {
-                SendReply(arg, "Testing Server Update");
-                Puts("Testing Server Update");
-                _updateInfo.RustServer = "Simulating Server Update";
-            }
-
-            if (args[0] == "devblog")
-            {
-                SendReply(arg, "Testing Devblog Update");
-                Puts("Testing Devblog Update");
-                _updateInfo.Newsgid = "Simulating Devblog Update";
-            }
-
-            if (args[0] == "client")
-            {
-                SendReply(arg, "Testing Client Update");
-                Puts("Testing Client Update");
-                _updateInfo.RustClient = "Simulating Client Update";
-            }
-
-            if (args[0] == "staging")
-            {
-                SendReply(arg, "Testing Stagting Update");
-                Puts("Testing Stagting Update");
-                _updateInfo.RustClientStaging = "Simulating Stagting Update";
-            }
-
-            if (args[0] == "umod")
-            {
-                SendReply(arg, "Testing UMod Update");
-                Puts("Testing UMod Update");
-                _updateInfo.UMod = "Simulating UMod Update";
-            }
-
-            if (args[0] == "carbon")
-            {
-                SendReply(arg, "Testing Carbon Update");
-                Puts("Testing Carbon Update");
-                _updateInfo.Carbon = "Simulating Carbon Update";
-            }
-
-            if (args[0] == "all")
-            {
-                SendReply(arg, "Testing All Updates");
-                Puts("Testing All Updates");
-                _updateInfo.RustServer = "Simulating Server Update";
-                _updateInfo.Newsgid = "Simulating Devblog Update";
-                _updateInfo.RustClient = "Simulating Client Update";
-                _updateInfo.RustClientStaging = "Simulating Stagting Update";
-                _updateInfo.UMod = "Simulating UMod Update";
-                _updateInfo.Carbon = "Simulating Carbon Update";
-            }
-
-            if (args[0] == "forcecheck")
-            {
-                SendReply(arg, "Forcing Version Check");
-                Puts("Forcing Version Check");
                 CompareVersions();
             }
 
-            if (args[0] == "loadconfig")
+            var command = args[0].ToLower();
+
+            switch (command)
             {
-                SendReply(arg, "Loading Configuration File");
-                Puts("Loading Configuration File");
-                LoadNewConfig();
+                case "gui":
+                    TestNotification(arg, "GUI", GUIAnnouncements, "Test message from Update Notice by Psystec", SendtoGui);
+                    break;
+
+                case "discord":
+                    TestNotification(arg, "Discord", !string.IsNullOrEmpty(_configuration.DiscordWebhookURL), "Test message from Update Notice by Psystec", SendToDiscord);
+                    break;
+
+                case "current":
+                    DisplayCurrentVersions(arg);
+                    break;
+
+                case "server":
+                case "devblog":
+                case "client":
+                case "staging":
+                case "umod":
+                case "carbon":
+                    TestUpdate(arg, command);
+                    break;
+
+                case "all":
+                    TestAllUpdates(arg);
+                    break;
+
+                case "forcecheck":
+                    Puts("Forcing Version Check");
+                    CompareVersions();
+                    break;
+
+                case "loadconfig":
+                    Puts("Loading Configuration File");
+                    LoadNewConfig();
+                    break;
+
+                default:
+                    SendHelp(arg);
+                    break;
             }
+        }
+
+        private void TestNotification(Arg arg, string type, bool condition, string message, Action<string> notificationMethod)
+        {
+            if (!condition)
+            {
+                PrintWarning(Lang($"PluginNotFound{type}Announcements"));
+                return;
+            }
+
+            Puts($"Testing {type} Messages: {message}");
+            notificationMethod.Invoke(message);
+        }
+
+        private void TestUpdate(Arg arg, string type)
+        {
+            Puts($"Testing {type} Update");
+            typeof(UpdateInfo).GetProperty(type)?.SetValue(_updateInfo, $"Simulating {type} Update");
+        }
+
+        private void TestAllUpdates(Arg arg)
+        {
+            Puts("Testing All Updates");
+
+            typeof(UpdateInfo).GetProperties().Where(p => p.Name != "Newsurl").ToList().ForEach(p =>
+            {
+                p.SetValue(_updateInfo, $"Simulating {p.Name} Update");
+            });
+        }
+
+        private void DisplayCurrentVersions(Arg arg)
+        {
+            SendReply(arg, $"Update Notice by Psystec\n" +
+                           $"Server: {_updateInfo.RustServer}\n" +
+                           $"DevBlog: {_updateInfo.Newsgid}\n" +
+                           $"Client: {_updateInfo.RustClient}\n" +
+                           $"Staging: {_updateInfo.RustClientStaging}\n" +
+                           $"UMod: {_updateInfo.UMod}\n" +
+                           $"Carbon: {_updateInfo.Carbon}");
+        }
+
+        private void SendHelp(Arg arg)
+        {
+            var width = 30;
+            SendReply(arg, (Lang("Help.Command")).PadRight(width) + Lang("Help.Description"));
+            SendReply(arg, ("updatenotice gui").PadRight(width) + Lang("Help.Gui"));
+            SendReply(arg, ("updatenotice discord").PadRight(width) + Lang("Help.Discord"));
+            SendReply(arg, ("updatenotice current").PadRight(width) + Lang("Help.Current"));
+            SendReply(arg, ("updatenotice server").PadRight(width) + Lang("Help.Server"));
+            SendReply(arg, ("updatenotice devblog").PadRight(width) + Lang("Help.DevBlog"));
+            SendReply(arg, ("updatenotice client").PadRight(width) + Lang("Help.Client"));
+            SendReply(arg, ("updatenotice staging").PadRight(width) + Lang("Help.Staging"));
+            SendReply(arg, ("updatenotice oxide").PadRight(width) + Lang("Help.Oxide"));
+            SendReply(arg, ("updatenotice carbon").PadRight(width) + Lang("Help.Carbon"));
+            SendReply(arg, ("updatenotice all").PadRight(width) + Lang("Help.All"));
+            SendReply(arg, ("updatenotice forcecheck").PadRight(width) + Lang("Help.ForceCheck"));
+            SendReply(arg, ("updatenotice loadconfig").PadRight(width) + Lang("Help.LoadConfig"));
         }
 
         #endregion Testing
@@ -424,13 +437,13 @@ namespace Oxide.Plugins
         {
             webrequest.Enqueue(ApiUrl, null, (code, response) =>
             {
-                if (code != 200 || response == null || code == 0)
+                if (code != 200 || response == null)
                 {
-                    PrintWarning("API: " + Lang("FailedToCheckUpdates") + "\nError Code: " + code + " | Message: " + response);
+                    PrintWarning($"API: {Lang("FailedToCheckUpdates")}\nError Code: {code} | Message: {response}");
                     return;
                 }
 
-                UpdateInfo nVData = JsonConvert.DeserializeObject<UpdateInfo>(response);
+                var nVData = JsonConvert.DeserializeObject<UpdateInfo>(response);
 
                 if (_initLoad)
                 {
@@ -438,93 +451,31 @@ namespace Oxide.Plugins
                     _initLoad = false;
                 }
 
-                if (nVData.RustClientStaging != _updateInfo.RustClientStaging)
-                {
-                    Puts(Lang("StagingUpdated"));
-                    if (_configuration.EnableStaging)
-                    {
-                        if (_configuration.EnableChatNotifications)
-                            SendToChat(Lang("StagingUpdated"));
-                        if (_configuration.EnableGuiNotifications)
-                            SendtoGui(Lang("StagingUpdated"));
-                        if (_configuration.EnableDiscordNotify)
-                            SendToDiscord(Lang("StagingUpdated"));
-                    }
-                }
-
-                if (nVData.RustClient != _updateInfo.RustClient)
-                {
-                    Puts(Lang("ClientUpdated"));
-                    if (_configuration.EnableClient)
-                    {
-                        if (_configuration.EnableChatNotifications)
-                            SendToChat(Lang("ClientUpdated"));
-                        if (_configuration.EnableGuiNotifications)
-                            SendtoGui(Lang("ClientUpdated"));
-                        if (_configuration.EnableDiscordNotify)
-                            SendToDiscord(Lang("ClientUpdated"));
-                    }
-                }
-
-                if (nVData.Newsgid != _updateInfo.Newsgid)
-                {
-                    Puts(Lang("DevBlogUpdated"));
-                    if (_configuration.EnableDevBlog)
-                    {
-                        if (_configuration.EnableChatNotifications)
-                            SendToChat(Lang("DevBlogUpdated"));
-                        if (_configuration.EnableGuiNotifications)
-                            SendtoGui(Lang("DevBlogUpdated"));
-                        if (_configuration.EnableDiscordNotify)
-                            SendToDiscord(Lang("DevBlogUpdated") + ": " + _updateInfo.Newsurl);
-                    }
-                }
-
-                if (nVData.UMod != _updateInfo.UMod)
-                {
-                    Puts(Lang("UModUpdated"));
-                    if (_configuration.EnableUMod)
-                    {
-                        if (_configuration.EnableChatNotifications)
-                            SendToChat(Lang("UModUpdated"));
-                        if (_configuration.EnableGuiNotifications)
-                            SendtoGui(Lang("UModUpdated"));
-                        if (_configuration.EnableDiscordNotify)
-                            SendToDiscord(Lang("UModUpdated"));
-                    }
-                }
-
-                if (nVData.Carbon != _updateInfo.Carbon)
-                {
-                    Puts(Lang("CarbonUpdated"));
-                    if (_configuration.EnableCarbon)
-                    {
-                        if (_configuration.EnableChatNotifications)
-                            SendToChat(Lang("CarbonUpdated"));
-                        if (_configuration.EnableGuiNotifications)
-                            SendtoGui(Lang("CarbonUpdated"));
-                        if (_configuration.EnableDiscordNotify)
-                            SendToDiscord(Lang("CarbonUpdated"));
-                    }
-                }
-
-                if (nVData.RustServer != _updateInfo.RustServer)
-                {
-                    Puts(Lang("ServerUpdated"));
-                    if (_configuration.EnableServer)
-                    {
-                        if (_configuration.EnableChatNotifications)
-                            SendToChat(Lang("ServerUpdated"));
-                        if (_configuration.EnableGuiNotifications)
-                            SendtoGui(Lang("ServerUpdated"));
-                        if (_configuration.EnableDiscordNotify)
-                            SendToDiscord(Lang("ServerUpdated"));
-                    }
-                }
+                UpdateCheck("Staging", nVData.RustClientStaging, _updateInfo.RustClientStaging, _configuration.EnableStaging);
+                UpdateCheck("Client", nVData.RustClient, _updateInfo.RustClient, _configuration.EnableClient);
+                UpdateCheck("DevBlog", nVData.Newsgid, _updateInfo.Newsgid, _configuration.EnableDevBlog, _updateInfo.Newsurl);
+                UpdateCheck("UMod", nVData.UMod, _updateInfo.UMod, _configuration.EnableUMod);
+                UpdateCheck("Carbon", nVData.Carbon, _updateInfo.Carbon, _configuration.EnableCarbon);
+                UpdateCheck("Server", nVData.RustServer, _updateInfo.RustServer, _configuration.EnableServer);
 
                 _updateInfo = nVData;
 
-            }, this, Core.Libraries.RequestMethod.GET);
+            }, this);
+        }
+
+        private void UpdateCheck(string type, string newData, string oldData, bool enableFeature, string additionalInfo = null)
+        {
+            if (newData == oldData) return;
+            if (!enableFeature) return;
+
+            Puts(Lang($"{type}Updated"));
+
+            if (_configuration.EnableChatNotifications)
+                SendToChat(Lang($"{type}Updated"));
+            if (_configuration.EnableGuiNotifications)
+                SendtoGui(Lang($"{type}Updated"));
+            if (_configuration.EnableDiscordNotify)
+                SendToDiscord(Lang($"{type}Updated") + (additionalInfo != null ? $": {additionalInfo}" : ""));
         }
 
         #endregion Version Comparison
@@ -534,13 +485,12 @@ namespace Oxide.Plugins
         private string Lang(string key, string id = null, params object[] args) => string.Format(lang.GetMessage(key, this, id), args);
         private bool HasPermission(BasePlayer player, string perm)
         {
-            if (!permission.UserHasPermission(player.userID.ToString(), perm))
-            {
-                PrintWarning("UserID: " + player.UserIDString + " | UserName: " + player.displayName + " | " + Lang("NoPermission"));
-                return false;
-            }
-            return true;
+            if (permission.UserHasPermission(player.userID.ToString(), perm)) return true;
+
+            PrintWarning("UserID: " + player.UserIDString + " | UserName: " + player.displayName + " | " + Lang("NoPermission"));
+            return false;
         }
+
         private void SendtoGui(string message)
         {
             if (GUIAnnouncements == null)
@@ -553,11 +503,10 @@ namespace Oxide.Plugins
             {
                 if (_configuration.OnlyNotifyAdmins)
                 {
-                    if (_configuration.OnlyNotifyAdmins && HasPermission(player, AdminPermission))
-                    {
-                        GUIAnnouncements?.Call("CreateAnnouncement", message, _configuration.GUINotificationsTintColor, _configuration.GUINotificationsTextColor, player);
-                        Puts($"Announcement created for: {player.displayName}: {message}");
-                    }
+                    if (!_configuration.OnlyNotifyAdmins || !HasPermission(player, AdminPermission)) continue;
+
+                    GUIAnnouncements?.Call("CreateAnnouncement", message, _configuration.GUINotificationsTintColor, _configuration.GUINotificationsTextColor, player);
+                    Puts($"Announcement created for: {player.displayName}: {message}");
                 }
                 else
                 {
@@ -566,44 +515,46 @@ namespace Oxide.Plugins
                 }
             }
         }
+
         private void SendToChat(string message)
         {
             rust.BroadcastChat(null, $"<size=20><color=#ff0000>Update Notice</color></size>\n{message}");
         }
+
         private void SendToDiscord(string message)
         {
-            Dictionary<string, string> headers = new Dictionary<string, string>();
-            headers.Add("Content-Type", "application/json");
+            var headers = new Dictionary<string, string> { { "Content-Type", "application/json" } };
 
-            DiscordMessageEmbeds dc = new DiscordMessageEmbeds();
-            dc.content = message;
-            dc.embeds = new[]
+            var dc = new DiscordMessageEmbeds
             {
-                new Embed
+                content = _configuration.DiscordRoleId == 0
+                    ? message
+                    : $"<@&{_configuration.DiscordRoleId}> {message}",
+                embeds = new[]
                 {
-                    title = "Update Notice",
-                    description = $"Alert Time: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nVisit [Umod](https://umod.org/plugins/update-notice) for more information or [Discord](https://discord.gg/EyRgFdA) for any assistance.",
-                    url = "https://discord.gg/EyRgFdA",
-                    color = 16711686,
-                    thumbnail = new Thumbnail { url = "https://assets.umod.org/images/icons/plugin/5ea987f1379b2.png" },
-                    footer = new Footer { icon_url = "https://assets.umod.org/user/7O3gGkDgaP/14G1myUYST6LEi2.png", text = "Created by Psystec" }
+                    new Embed
+                    {
+                        title = "Update Notice",
+                        description = $"Alert Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\nVisit [Umod](https://umod.org/plugins/update-notice) for more information or [Discord](https://discord.gg/EyRgFdA) for any assistance.",
+                        url = "https://discord.gg/EyRgFdA",
+                        color = 16711686,
+                        thumbnail = new Thumbnail { url = "https://assets.umod.org/images/icons/plugin/5ea987f1379b2.png" },
+                        footer = new Footer { icon_url = "https://assets.umod.org/user/7O3gGkDgaP/14G1myUYST6LEi2.png", text = "Created by Psystec" }
+                    }
                 }
-
             };
 
-            string payload = JsonConvert.SerializeObject(dc);
+            var payload = JsonConvert.SerializeObject(dc);
             webrequest.Enqueue(_configuration.DiscordWebhookURL, payload, (code, response) =>
             {
-                if (code != 200 && code != 204)
+                if (code == 200 || code == 204) return;
+                if (response == null)
                 {
-                    if (response == null)
-                    {
-                        PrintWarning($"Discord didn't respond. Error Code: {code}");
-                    }
-                    else
-                    {
-                        Puts($"Discord respond with: {response} Payload: {payload}");
-                    }
+                    PrintWarning($"Discord didn't respond. Error Code: {code}");
+                }
+                else
+                {
+                    Puts($"Discord respond with: {response} Payload: {payload}");
                 }
             }, this, Core.Libraries.RequestMethod.POST, headers);
         }
@@ -612,19 +563,21 @@ namespace Oxide.Plugins
 
         #region Internal API
 
-        public string GetServerVersion() => _updateInfo.RustServer;
-        public string GetDevBlogVersion() => _updateInfo.Newsgid;
-        public string GetClientVersion() => _updateInfo.RustClient;
-        public string GetStagingVersion() => _updateInfo.RustClientStaging;
-        public string GetUModVersion() => _updateInfo.UMod;
-        public string GetCarbonVersion() => _updateInfo.Carbon;
-        public string GetDevBlogLink() => _updateInfo.Newsurl;
+        public string GetServerVersion() => _updateInfo?.RustServer;
+        public string GetDevBlogVersion() => _updateInfo?.Newsgid;
+        public string GetClientVersion() => _updateInfo?.RustClient;
+        public string GetStagingVersion() => _updateInfo?.RustClientStaging;
+        public string GetUModVersion() => _updateInfo?.UMod;
+        public string GetCarbonVersion() => _updateInfo?.Carbon;
+        public string GetDevBlogLink() => _updateInfo?.Newsurl;
 
         #endregion Internal API
 
         #region External API
+
         [PluginReference]
         Plugin GUIAnnouncements;
+
         #endregion External API
     }
 }
