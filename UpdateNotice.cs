@@ -11,15 +11,17 @@ namespace Oxide.Plugins
 {
     [Info("Update Notice", "Psystec", "3.1.0", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
-    public class UpdateNotice : RustPlugin
+    internal sealed class UpdateNotice : RustPlugin
     {
         //DO NOT EDIT. Please ask for permission or notify me should you require changes.
         #region Fields
 
-        private const string AdminPermission = "updatenotice.admin";
-        private const string ApiUrl = "http://rust.yamang.xyz:2095/rustapi";
         private Configuration _configuration;
         private UpdateInfo _updateInfo;
+
+        private const string AdminPermission = "updatenotice.admin";
+        private const string ApiUrl = "http://rust.yamang.xyz:2095/rustapi";
+
         private bool _initLoad = true;
         private int _checkingInterval = 180;
 
@@ -30,13 +32,24 @@ namespace Oxide.Plugins
             {"RustClient", "Client"},
             {"RustClientStaging", "ClientStaging"},
             {"RustServer", "Server"},
+            {"Newsgid", "DevBlog"},
+        };
+
+        private readonly Dictionary<string, string> _properCommands = new Dictionary<string, string>
+        {
+            {"Carbon", "carbon"},
+            {"UMod", "umod"},
+            {"RustClient", "client"},
+            {"RustClientStaging", "clientstaging"},
+            {"RustServer", "server"},
+            {"Newsgid", "devblog"},
         };
 
         #endregion Fields
 
         #region Classes
 
-        private class UpdateInfo
+        private sealed class UpdateInfo
         {
             public string Carbon { get; set; }
             public string UMod { get; set; }
@@ -49,7 +62,7 @@ namespace Oxide.Plugins
         }
 
         #region Discord Message
-        private class DiscordMessageEmbeds
+        private sealed class DiscordMessageEmbeds
         {
             /// <summary>
             /// if used, it overrides the default username of the webhook
@@ -68,7 +81,7 @@ namespace Oxide.Plugins
             /// </summary>
             public Embed[] embeds { get; set; }
         }
-        private class Embed
+        private sealed class Embed
         {
             /// <summary>
             /// embed author object
@@ -107,7 +120,7 @@ namespace Oxide.Plugins
             /// </summary>
             public Footer footer { get; set; }
         }
-        private class Author
+        private sealed class Author
         {
             /// <summary>
             /// name of author
@@ -122,21 +135,21 @@ namespace Oxide.Plugins
             /// </summary>
             public string icon_url { get; set; }
         }
-        private class Thumbnail
+        private sealed class Thumbnail
         {
             /// <summary>
             /// url of thumbnail
             /// </summary>
             public string url { get; set; }
         }
-        private class Image
+        private sealed class Image
         {
             /// <summary>
             /// url of image
             /// </summary>
             public string url { get; set; }
         }
-        private class Footer
+        private sealed class Footer
         {
             /// <summary>
             /// footer text, doesn't support Markdown
@@ -147,7 +160,7 @@ namespace Oxide.Plugins
             /// </summary>
             public string icon_url { get; set; }
         }
-        private class Field
+        private sealed class Field
         {
             /// <summary>
             /// name of the field
@@ -168,7 +181,7 @@ namespace Oxide.Plugins
 
         #region Configuration
 
-        private class Configuration
+        private sealed class Configuration
         {
             [JsonProperty("Only Notify Admin")]
             public bool OnlyNotifyAdmins { get; set; } = false;
@@ -255,6 +268,7 @@ namespace Oxide.Plugins
                 ["Help.All"] = "Simulate all updates released (depends on config)",
                 ["Help.ForceCheck"] = "Forces a version check",
                 ["Help.LoadConfig"] = "Reload the config file",
+                ["Chat.Prefix"] = "<size=20><color=#ff0000>Update Notice</color></size>",
             }, this);
             lang.RegisterMessages(new Dictionary<string, string>
             {
@@ -283,6 +297,7 @@ namespace Oxide.Plugins
                 ["Help.All"] = "Simule toutes les notifications de mise à jour (dépend de la config)",
                 ["Help.ForceCheck"] = "Force l'actualisation des données",
                 ["Help.LoadConfig"] = "Recharge la configuration",
+                ["Chat.Prefix"] = "<size=20><color=#ff0000>Avis de mise à jour</color></size>",
             }, this, "fr");
         }
 
@@ -354,10 +369,10 @@ namespace Oxide.Plugins
                 case "server":
                 case "devblog":
                 case "client":
-                case "staging":
+                case "clientstaging":
                 case "umod":
                 case "carbon":
-                    TestUpdate(command);
+                    TestUpdate(command, true);
                     break;
 
                 case "all":
@@ -392,13 +407,18 @@ namespace Oxide.Plugins
             notificationMethod.Invoke(message);
         }
 
-        private void TestUpdate(string type)
+        private void TestUpdate(string type, bool isCmd)
         {
             Puts($"Testing {type} Update");
 
             Interface.CallHook($"On{type}Update", "TestUpdate");
 
             // Yeah that's reflexion but fuck infernal switch case
+            if (isCmd)
+            {
+                typeof(UpdateInfo).GetProperty(_properCommands.FirstOrDefault(x => x.Value == type).Key)?.SetValue(_updateInfo, $"Simulating {type} Update");
+                return;
+            }
             typeof(UpdateInfo).GetProperty(_properNames.FirstOrDefault(x => x.Value == type).Key)?.SetValue(_updateInfo, $"Simulating {type} Update");
         }
 
@@ -408,7 +428,7 @@ namespace Oxide.Plugins
 
             foreach (var keyValuePair in _properNames)
             {
-                TestUpdate(keyValuePair.Value);
+                TestUpdate(keyValuePair.Value, false);
             }
         }
 
@@ -497,7 +517,8 @@ namespace Oxide.Plugins
 
         #region Helpers
 
-        private string Lang(string key, string id = null, params object[] args) => string.Format(lang.GetMessage(key, this, id), args);
+        private string Lang(string key, string id = null, params object[] args)
+            => string.Format(lang.GetMessage(key, this, id), args);
 
         private bool HasPermission(BasePlayer player, string perm)
         {
@@ -534,7 +555,7 @@ namespace Oxide.Plugins
 
         private void SendToChat(string message)
         {
-            rust.BroadcastChat(null, $"<size=20><color=#ff0000>Update Notice</color></size>\n{message}");
+            rust.BroadcastChat(null, $"{Lang("Chat.Prefix")}\n{message}");
         }
 
         private void SendToDiscord(string message)
