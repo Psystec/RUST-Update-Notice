@@ -10,17 +10,17 @@ Please visit his discord and say thank you if you find this plugin usefull: disc
  
 Update Notice can be used to notify you when the following updates is released:
 
-*  Server
-*  DevBlog
-*  Client
-*  Staging
-*  UMod
-*  Carbon
+* Carbon
+* Client
+* ClientStaging
+* DevBlog
+* Oxide
+* Server
 
 You can also be notified via:
 
 * Ingame Chat
-* GUI Announcements
+* [GUI Announcements](https://umod.org/plugins/gui-announcements)
 * Discord
 
 ## Permissions
@@ -76,7 +76,8 @@ To use the `Only Notify Admin` option, add the following premission to a group o
   "Help.Carbon": "Simulate Carbon update release",
   "Help.All": "Simulate all updates released (depends on config)",
   "Help.ForceCheck": "Forces a version check",
-  "Help.LoadConfig": "Reload the config file"
+  "Help.LoadConfig": "Reload the config file",
+  "Chat.Prefix": "<size=20><color=#ff0000>Update Notice</color></size>"
 }
 ```
 
@@ -89,14 +90,16 @@ To use the `Only Notify Admin` option, add the following premission to a group o
 
 ## For Developers
 
+### Hooks
+
 ```csharp
-UpdateNotice.Call<string>("GetServerVersion");
-UpdateNotice.Call<string>("GetDevBlogVersion");
-UpdateNotice.Call<string>("GetClientVersion");
-UpdateNotice.Call<string>("GetStagingVersion");
-UpdateNotice.Call<string>("GetUModVersion");
 UpdateNotice.Call<string>("GetCarbonVersion");
+UpdateNotice.Call<string>("GetClientVersion");
+UpdateNotice.Call<string>("GetClientStagingVersion");
 UpdateNotice.Call<string>("GetDevBlogLink");
+UpdateNotice.Call<string>("GetDevBlogVersion");
+UpdateNotice.Call<string>("GetOxideVersion");
+UpdateNotice.Call<string>("GetServerVersion");
 ```
 
 ```csharp
@@ -105,6 +108,27 @@ UpdateNotice.Call<string>("GetDevBlogLink");
 private void Init()
 {
     string serverVersion = UpdateNotice.Call<string>("GetServerVersion");
+}
+```
+
+### Events
+
+```csharp
+void OnCarbonUpdate(string version);
+void OnClientUpdate(string version);
+void OnClientStagingUpdate(string version);
+void OnDevBlogUpdate(string version);
+void OnOxideUpdate(string version);
+void OnServerUpdate(string version);
+```
+
+```csharp
+public class Plugin : RustPlugin
+{
+    void OnServerUpdate(string version)
+    {
+        Puts($"Server got updated! - {version}");
+    }
 }
 ```
 
@@ -117,12 +141,14 @@ Console Commands:
 - `updatenotice gui` -- Test GUI notification
 - `updatenotice discord` -- Test Discord notification
 - `updatenotice current` -- Display current update versions
+
 - `updatenotice server` -- Simulate Server update release
 - `updatenotice devblog` -- Simulate DevBlog update release
 - `updatenotice client` -- Simulate Client update release
-- `updatenotice staging` -- Simulate Staging update release
+- `updatenotice clientstaging` -- Simulate Staging update release
 - `updatenotice umod` -- Simulate Oxide update release
 - `updatenotice carbon` -- Simulate Carbon update release
+
 - `updatenotice all` -- Simulate all updates released
 - `updatenotice forcecheck` -- Forces a version check
 - `updatenotice loadconfig` -- Reads the config file
