@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Oxide.Core;
 using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,15 @@ namespace Oxide.Plugins
         private UpdateInfo _updateInfo;
         private bool _initLoad = true;
         private int _checkingInterval = 180;
+
+        private readonly Dictionary<string, string> _properNames = new Dictionary<string, string>
+        {
+            {"Carbon", "Carbon"},
+            {"UMod", "Oxide"},
+            {"RustClient", "Client"},
+            {"RustClientStaging", "ClientStaging"},
+            {"RustServer", "Server"},
+        };
 
         #endregion Fields
 
@@ -314,9 +324,7 @@ namespace Oxide.Plugins
                 SendReply(arg, Lang("NoPermission"));
                 return;
             }
-            var args = arg?.Args;
-
-            if (args == null)
+            if (arg.Args.IsNullOrEmpty())
             {
                 SendHelp(arg);
                 return;
@@ -327,16 +335,16 @@ namespace Oxide.Plugins
                 CompareVersions();
             }
 
-            var command = args[0].ToLower();
+            var command = arg.Args[0].ToLower();
 
             switch (command)
             {
                 case "gui":
-                    TestNotification(arg, "GUI", GUIAnnouncements, "Test message from Update Notice by Psystec", SendtoGui);
+                    TestNotification("GUI", GUIAnnouncements, "Test message from Update Notice by Psystec", SendtoGui);
                     break;
 
                 case "discord":
-                    TestNotification(arg, "Discord", !string.IsNullOrEmpty(_configuration.DiscordWebhookURL), "Test message from Update Notice by Psystec", SendToDiscord);
+                    TestNotification("Discord", !string.IsNullOrEmpty(_configuration.DiscordWebhookURL), "Test message from Update Notice by Psystec", SendToDiscord);
                     break;
 
                 case "current":
@@ -349,11 +357,11 @@ namespace Oxide.Plugins
                 case "staging":
                 case "umod":
                 case "carbon":
-                    TestUpdate(arg, command);
+                    TestUpdate(command);
                     break;
 
                 case "all":
-                    TestAllUpdates(arg);
+                    TestAllUpdates();
                     break;
 
                 case "forcecheck":
@@ -372,7 +380,7 @@ namespace Oxide.Plugins
             }
         }
 
-        private void TestNotification(Arg arg, string type, bool condition, string message, Action<string> notificationMethod)
+        private void TestNotification(string type, bool condition, string message, Action<string> notificationMethod)
         {
             if (!condition)
             {
@@ -384,20 +392,24 @@ namespace Oxide.Plugins
             notificationMethod.Invoke(message);
         }
 
-        private void TestUpdate(Arg arg, string type)
+        private void TestUpdate(string type)
         {
             Puts($"Testing {type} Update");
-            typeof(UpdateInfo).GetProperty(type)?.SetValue(_updateInfo, $"Simulating {type} Update");
+
+            Interface.CallHook($"On{type}Update", "TestUpdate");
+
+            // Yeah that's reflexion but fuck infernal switch case
+            typeof(UpdateInfo).GetProperty(_properNames.FirstOrDefault(x => x.Value == type).Key)?.SetValue(_updateInfo, $"Simulating {type} Update");
         }
 
-        private void TestAllUpdates(Arg arg)
+        private void TestAllUpdates()
         {
             Puts("Testing All Updates");
 
-            typeof(UpdateInfo).GetProperties().Where(p => p.Name != "Newsurl").ToList().ForEach(p =>
+            foreach (var keyValuePair in _properNames)
             {
-                p.SetValue(_updateInfo, $"Simulating {p.Name} Update");
-            });
+                TestUpdate(keyValuePair.Value);
+            }
         }
 
         private void DisplayCurrentVersions(Arg arg)
@@ -451,10 +463,10 @@ namespace Oxide.Plugins
                     _initLoad = false;
                 }
 
-                UpdateCheck("Staging", nVData.RustClientStaging, _updateInfo.RustClientStaging, _configuration.EnableStaging);
+                UpdateCheck("ClientStaging", nVData.RustClientStaging, _updateInfo.RustClientStaging, _configuration.EnableStaging);
                 UpdateCheck("Client", nVData.RustClient, _updateInfo.RustClient, _configuration.EnableClient);
                 UpdateCheck("DevBlog", nVData.Newsgid, _updateInfo.Newsgid, _configuration.EnableDevBlog, _updateInfo.Newsurl);
-                UpdateCheck("UMod", nVData.UMod, _updateInfo.UMod, _configuration.EnableUMod);
+                UpdateCheck("Oxide", nVData.UMod, _updateInfo.UMod, _configuration.EnableUMod);
                 UpdateCheck("Carbon", nVData.Carbon, _updateInfo.Carbon, _configuration.EnableCarbon);
                 UpdateCheck("Server", nVData.RustServer, _updateInfo.RustServer, _configuration.EnableServer);
 
@@ -466,6 +478,9 @@ namespace Oxide.Plugins
         private void UpdateCheck(string type, string newData, string oldData, bool enableFeature, string additionalInfo = null)
         {
             if (newData == oldData) return;
+
+            Interface.CallHook($"On{type}Update", newData);
+
             if (!enableFeature) return;
 
             Puts(Lang($"{type}Updated"));
@@ -483,6 +498,7 @@ namespace Oxide.Plugins
         #region Helpers
 
         private string Lang(string key, string id = null, params object[] args) => string.Format(lang.GetMessage(key, this, id), args);
+
         private bool HasPermission(BasePlayer player, string perm)
         {
             if (permission.UserHasPermission(player.userID.ToString(), perm)) return true;
