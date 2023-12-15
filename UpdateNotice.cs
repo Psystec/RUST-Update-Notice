@@ -9,7 +9,7 @@ using static ConsoleSystem;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "3.1.0", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "3.1.1", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
     internal sealed class UpdateNotice : RustPlugin
     {
@@ -246,7 +246,7 @@ namespace Oxide.Plugins
                 ["ServerUpdated"] = "Server Update Released!",
                 ["DevBlogUpdated"] = "DevBlog Update Released!",
                 ["ClientUpdated"] = "Client Update Released!",
-                ["StagingUpdated"] = "Staging Update Released!",
+                ["ClientStagingUpdated"] = "Client Staging Update Released!",
                 ["UModUpdated"] = "UMod Update Released!",
                 ["CarbonUpdated"] = "Carbon Update Released!",
                 ["FailedToCheckUpdates"] = "Failed to check for RUST updates, if this keeps happening please contact the developer.",
@@ -275,7 +275,7 @@ namespace Oxide.Plugins
                 ["ServerUpdated"] = "Mise à jour du Serveur disponible !",
                 ["DevBlogUpdated"] = "Mise à jour du \"DevBlog\" disponible !",
                 ["ClientUpdated"] = "Mise à jour du Client disponible !",
-                ["StagingUpdated"] = "Mise à jour de la branche \"Staging\" disponible !",
+                ["ClientStagingUpdated"] = "Mise à jour de la branche \"Staging\" du Client disponible !",
                 ["UModUpdated"] = "Mise à jour de UMod disponible !",
                 ["CarbonUpdated"] = "Mise à jour de Carbon disponible !",
                 ["FailedToCheckUpdates"] = "Récupération des mises à jour de RUST impossible, si cela se reproduit veuillez contacter le développeur.",
@@ -483,11 +483,11 @@ namespace Oxide.Plugins
                     _initLoad = false;
                 }
 
-                UpdateCheck("ClientStaging", nVData.RustClientStaging, _updateInfo.RustClientStaging, _configuration.EnableStaging);
+                UpdateCheck("Carbon", nVData.Carbon, _updateInfo.Carbon, _configuration.EnableCarbon);
                 UpdateCheck("Client", nVData.RustClient, _updateInfo.RustClient, _configuration.EnableClient);
+                UpdateCheck("ClientStaging", nVData.RustClientStaging, _updateInfo.RustClientStaging, _configuration.EnableStaging);
                 UpdateCheck("DevBlog", nVData.Newsgid, _updateInfo.Newsgid, _configuration.EnableDevBlog, _updateInfo.Newsurl);
                 UpdateCheck("Oxide", nVData.UMod, _updateInfo.UMod, _configuration.EnableUMod);
-                UpdateCheck("Carbon", nVData.Carbon, _updateInfo.Carbon, _configuration.EnableCarbon);
                 UpdateCheck("Server", nVData.RustServer, _updateInfo.RustServer, _configuration.EnableServer);
 
                 _updateInfo = nVData;
