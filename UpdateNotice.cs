@@ -20,7 +20,7 @@ namespace Oxide.Plugins
         private UpdateInfo _updateInfo;
 
         private const string AdminPermission = "updatenotice.admin";
-        private const string ApiUrl = "http://rust.yamang.xyz:2095/rustapi";
+        private const string ApiUrl = "http://218.52.201.117:2095/rustapi";
 
         private bool _initLoad = true;
         private int _checkingInterval = 180;
