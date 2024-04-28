@@ -9,7 +9,7 @@ using static ConsoleSystem;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "3.1.3", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "3.2.1", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
     internal sealed class UpdateNotice : RustPlugin
     {
@@ -21,29 +21,29 @@ namespace Oxide.Plugins
         private UpdateInfo _updateInfo;
 
         private const string AdminPermission = "updatenotice.admin";
-        private const string ApiUrl = "http://rust.yamang.xyz:2095/rustapi";
+        private const string ApiUrl = "http://api.yamang.xyz:2095/rustapi";
 
         private bool _initLoad = true;
         private int _checkingInterval = 180;
 
         private readonly Dictionary<string, string> _properNames = new Dictionary<string, string>
         {
-            {"Carbon", "Carbon"},
-            {"UMod", "Oxide"},
-            {"RustClient", "Client"},
-            {"RustClientStaging", "ClientStaging"},
-            {"RustServer", "Server"},
-            {"Newsgid", "DevBlog"},
+            {"carbon", "Carbon"},
+            {"uMod", "Oxide"},
+            {"rustClient", "Client"},
+            {"rustClientStaging", "ClientStaging"},
+            {"rustServer", "Server"},
+            {"newsgid", "DevBlog"},
         };
 
         private readonly Dictionary<string, string> _properCommands = new Dictionary<string, string>
         {
-            {"Carbon", "carbon"},
-            {"UMod", "umod"},
-            {"RustClient", "client"},
-            {"RustClientStaging", "clientstaging"},
-            {"RustServer", "server"},
-            {"Newsgid", "devblog"},
+            {"carbon", "carbon"},
+            {"uMod", "umod"},
+            {"rustClient", "client"},
+            {"rustClientStaging", "clientstaging"},
+            {"rustServer", "server"},
+            {"newsgid", "devblog"},
         };
 
         #endregion Fields
