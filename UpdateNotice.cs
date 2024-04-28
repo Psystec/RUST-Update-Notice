@@ -9,7 +9,7 @@ using static ConsoleSystem;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "3.2.1", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "3.2.2", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
     internal sealed class UpdateNotice : RustPlugin
     {
@@ -52,14 +52,14 @@ namespace Oxide.Plugins
 
         private sealed class UpdateInfo
         {
-            public string Carbon { get; set; }
-            public string UMod { get; set; }
-            public string RustClient { get; set; }
-            public string RustClientStaging { get; set; }
-            public string RustServer { get; set; }
-            public string Newsgid { get; set; }
-            public string Newsurl { get; set; }
-            public string Newsdate { get; set; }
+            public string carbon { get; set; }
+            public string uMod { get; set; }
+            public string rustClient { get; set; }
+            public string rustClientStaging { get; set; }
+            public string rustServer { get; set; }
+            public string newsgid { get; set; }
+            public string newsurl { get; set; }
+            public string newsdate { get; set; }
         }
 
         #region Discord Message
@@ -436,12 +436,12 @@ namespace Oxide.Plugins
         private void DisplayCurrentVersions(Arg arg)
         {
             SendReply(arg, $"Update Notice by Psystec\n" +
-                           $"Server: {_updateInfo.RustServer}\n" +
-                           $"DevBlog: {_updateInfo.Newsgid}\n" +
-                           $"Client: {_updateInfo.RustClient}\n" +
-                           $"Staging: {_updateInfo.RustClientStaging}\n" +
-                           $"UMod: {_updateInfo.UMod}\n" +
-                           $"Carbon: {_updateInfo.Carbon}");
+                           $"Server: {_updateInfo.rustServer}\n" +
+                           $"DevBlog: {_updateInfo.newsgid}\n" +
+                           $"Client: {_updateInfo.rustClient}\n" +
+                           $"Staging: {_updateInfo.rustClientStaging}\n" +
+                           $"UMod: {_updateInfo.uMod}\n" +
+                           $"Carbon: {_updateInfo.carbon}");
         }
 
         private void SendHelp(Arg arg)
@@ -484,12 +484,12 @@ namespace Oxide.Plugins
                     _initLoad = false;
                 }
 
-                UpdateCheck("Carbon", nVData.Carbon, _updateInfo.Carbon, _configuration.EnableCarbon);
-                UpdateCheck("Client", nVData.RustClient, _updateInfo.RustClient, _configuration.EnableClient);
-                UpdateCheck("ClientStaging", nVData.RustClientStaging, _updateInfo.RustClientStaging, _configuration.EnableStaging);
-                UpdateCheck("DevBlog", nVData.Newsgid, _updateInfo.Newsgid, _configuration.EnableDevBlog, _updateInfo.Newsurl);
-                UpdateCheck("Oxide", nVData.UMod, _updateInfo.UMod, _configuration.EnableUMod);
-                UpdateCheck("Server", nVData.RustServer, _updateInfo.RustServer, _configuration.EnableServer);
+                UpdateCheck("Carbon", nVData.carbon, _updateInfo.carbon, _configuration.EnableCarbon);
+                UpdateCheck("Client", nVData.rustClient, _updateInfo.rustClient, _configuration.EnableClient);
+                UpdateCheck("ClientStaging", nVData.rustClientStaging, _updateInfo.rustClientStaging, _configuration.EnableStaging);
+                UpdateCheck("DevBlog", nVData.newsgid, _updateInfo.newsgid, _configuration.EnableDevBlog, _updateInfo.newsurl);
+                UpdateCheck("Oxide", nVData.uMod, _updateInfo.uMod, _configuration.EnableUMod);
+                UpdateCheck("Server", nVData.rustServer, _updateInfo.rustServer, _configuration.EnableServer);
 
                 _updateInfo = nVData;
 
@@ -601,13 +601,13 @@ namespace Oxide.Plugins
 
         #region Internal API
 
-        public string GetServerVersion() => _updateInfo?.RustServer;
-        public string GetDevBlogVersion() => _updateInfo?.Newsgid;
-        public string GetClientVersion() => _updateInfo?.RustClient;
-        public string GetStagingVersion() => _updateInfo?.RustClientStaging;
-        public string GetUModVersion() => _updateInfo?.UMod;
-        public string GetCarbonVersion() => _updateInfo?.Carbon;
-        public string GetDevBlogLink() => _updateInfo?.Newsurl;
+        public string GetServerVersion() => _updateInfo?.rustServer;
+        public string GetDevBlogVersion() => _updateInfo?.newsgid;
+        public string GetClientVersion() => _updateInfo?.rustClient;
+        public string GetStagingVersion() => _updateInfo?.rustClientStaging;
+        public string GetUModVersion() => _updateInfo?.uMod;
+        public string GetCarbonVersion() => _updateInfo?.carbon;
+        public string GetDevBlogLink() => _updateInfo?.newsurl;
 
         #endregion Internal API
 
