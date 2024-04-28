@@ -9,18 +9,19 @@ using static ConsoleSystem;
 
 namespace Oxide.Plugins
 {
-    [Info("Update Notice", "Psystec", "3.1.1", ResourceId = 2837)]
+    [Info("Update Notice", "Psystec", "3.1.3", ResourceId = 2837)]
     [Description("Notifies you when new Rust updates are released.")]
     internal sealed class UpdateNotice : RustPlugin
     {
         //DO NOT EDIT. Please ask for permission or notify me should you require changes.
+        //Check out our API host sponser YaMang's plugins at codefling.com: https://codefling.com/yamang-w
         #region Fields
 
         private Configuration _configuration;
         private UpdateInfo _updateInfo;
 
         private const string AdminPermission = "updatenotice.admin";
-        private const string ApiUrl = "http://218.52.201.117:2095/rustapi";
+        private const string ApiUrl = "http://rust.yamang.xyz:2095/rustapi";
 
         private bool _initLoad = true;
         private int _checkingInterval = 180;
